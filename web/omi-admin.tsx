@@ -1,6 +1,7 @@
 import React, { useEffect, useState, type FormEvent } from "react";
 import "./omi-admin.css";
 import { AdminSave } from "./admin-save";
+import { beginLiveAction } from "./application/live-action";
 
 type Run = { status: string; code?: string; pages: number; fetched: number; changed: number; excluded: number; finishedAt?: string; coverage: string };
 type Status = { revision: number; enabled: boolean; councilEnabled: boolean; keyConfigured: boolean; historyCount: number; folder: string | null; retryAt: string | null; lastRun: Run | null; connectionVerifiedAt?: string; backfill?: { status: string; offset: number } | null; pendingReviewCount?: number; newestConversationAt?: string; councilFailure?: { at: string; code: string } | null; lastCouncil?: { publishedAt: string; conversationCount: number; pageCount: number } | null };
@@ -31,11 +32,13 @@ export function OmiAdmin({ profile, token }: { profile: string; token: string })
   const [confirmation, setConfirmation] = useState("");
   const endpoint = `/api/${profile.toLowerCase()}/integrations/omi`;
   async function request<T>(suffix = "", body?: unknown, signal?: AbortSignal): Promise<T> {
+    const live = body ? await beginLiveAction(profile) : undefined;
     const response = await fetch(endpoint + suffix, { method: body ? "POST" : "GET", cache: "no-store", signal,
-      headers: { "X-Vorton-Session": token, ...(body ? { "Content-Type": "application/json" } : {}) },
+      headers: { "X-Vorton-Session": live?.token ?? token, ...(body ? { "Content-Type": "application/json" } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}) });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Omi request could not be completed.");
+    live?.assertCurrent();
     return result;
   }
   function apply(value: Status) { setStatus(value); setEnabled(value.enabled); setCouncil(value.councilEnabled); setFolder(value.folder ?? ""); }

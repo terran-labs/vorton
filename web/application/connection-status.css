@@ -1,0 +1,32 @@
+.connection-status { position: fixed; left: max(16px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 120; font-family: var(--aub-font-body); }
+.connection-status .connection-status-button { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: white; box-shadow: 0 3px 12px rgba(0,0,0,.25); cursor: pointer; }
+.connection-status .connection-status-button.is-offline { background: #b42318; }
+.connection-status .connection-status-button.is-update { background: #245ab3; }
+.connection-status button:focus-visible { outline: 3px solid var(--aub-accent, #8b74ff); outline-offset: 3px; }
+.connection-status-panel { position: absolute; bottom: 56px; left: 0; width: min(340px, calc(100vw - 32px)); max-height: min(70vh, 560px); overflow: auto; box-sizing: border-box; padding: 20px; border: 1px solid var(--aub-border); border-radius: 14px; background: var(--aub-card-solid, #fff); color: var(--aub-text, #222); box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+.connection-status-panel h2 { margin: 0 0 12px; font-size: 20px; font-weight: 500; }
+.connection-status-panel p { font-size: 14px; line-height: 1.5; margin: 10px 0; }
+.connection-status-panel dl { font-size: 13px; margin: 16px 0; }
+.connection-status-panel dt { font-weight: 600; margin-top: 10px; }
+.connection-status-panel dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+.connection-status-panel .connection-status-time { font-size: 12px; opacity: .7; }
+.connection-status-panel button { min-height: 40px; padding: 8px 12px; border: 1px solid var(--aub-border); border-radius: 8px; background: var(--aub-card, transparent); color: inherit; cursor: pointer; }
+.connection-status-panel button:disabled { opacity: .6; cursor: wait; }
+.connection-status-panel .connection-status-close { display: block; margin-top: 12px; }
+.connection-status-count { position: absolute; right: -5px; top: -6px; min-width: 20px; padding: 1px 3px; box-sizing: border-box; border-radius: 10px; background: var(--aub-card-solid, white); color: var(--aub-text, #222); border: 1px solid var(--aub-border); font-size: 11px; line-height: 17px; }
+.pending-changes h3 { margin: 16px 0 6px; font-size: 16px; font-weight: 500; }
+.pending-changes:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.pending-changes-list { list-style: none; margin: 10px 0; padding: 0; max-height: min(40dvh, 320px); overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.pending-changes-list:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.pending-changes-list > li { padding: 12px 8px; border-bottom: 1px solid var(--aub-border); overflow-wrap: anywhere; }
+.pending-changes-list strong { display: block; font-size: 14px; font-weight: 600; }
+.pending-changes-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.pending-changes-operation { font-size: 11px; flex-shrink: 0; }
+.pending-changes-list p { margin: 5px 0; font-size: 12px; }
+.pending-changes-list summary { min-height: 36px; display: list-item; align-content: center; font-size: 13px; cursor: pointer; }
+.pending-changes-list pre { max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; padding: 8px; background: var(--aub-card); border-radius: 6px; }
+.pending-changes-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.pending-changes-error { color: inherit; font-weight: 500; }
+.pending-changes-differences dd { white-space: pre-wrap; margin: 4px 0; }
+.pending-changes-differences dd > span:first-child { font-weight: 600; }
+@media (forced-colors: active) { .connection-status-count, .pending-changes-list > li { border-color: CanvasText; } }

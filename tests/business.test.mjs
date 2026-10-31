@@ -117,14 +117,15 @@ test("business records persist with history, scoped links, revision checks, and 
     assert.equal(saved.preferenceHistory[1].before.defaultOwner, "Owner");
     assert.equal((await store.read("Other")).ledger.length, 0);
     // Old schema1 files gain empty collections without losing their prior work.
-    const filename = path.join(root, "LastResort/state/core.json");
-    const old = JSON.parse(await readFile(filename));
+    const legacy = new Store(path.join(root, "legacy-import"));
+    const filename = path.join(await legacy.directory("LastResort"), "core.json");
+    const old = structuredClone(saved);
     delete old.opportunities;
     delete old.ledger;
     delete old.settings;
     delete old.financePlan;
     await writeFile(filename, JSON.stringify(old));
-    const migrated = await store.read("LastResort");
+    const migrated = await legacy.read("LastResort");
     assert.deepEqual(migrated.opportunities, []);
     assert.deepEqual(migrated.ledger, []);
     assert.equal(migrated.revision, 5);

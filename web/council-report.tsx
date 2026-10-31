@@ -2,6 +2,7 @@ import React, { useId, useState } from "react";
 import type { State } from "./types";
 import { CouncilExperience } from "./council-views";
 import { councilReadingText } from "./council-presentation";
+import { nightLabel, publicationLabel } from "./council-dates";
 
 // Render a deliberately small Markdown subset. Record text never becomes HTML.
 function inline(text: string): React.ReactNode[] {
@@ -30,8 +31,8 @@ export function ReportBody({ text }: { text: string }) {
   })}</div>;
 }
 
-export function CouncilHistory({state}: {state: State}) {
-  return <CouncilExperience state={state} renderEvidence={session => <SessionEvidence state={state} session={session}/>} />;
+export function CouncilHistory({state, sessionId, onSessionChange}: {state: State; sessionId?: string; onSessionChange?: (id: string) => void}) {
+  return <CouncilExperience state={state} sessionId={sessionId} onSessionChange={onSessionChange} renderEvidence={session => <SessionEvidence state={state} session={session}/>} />;
 }
 
 function SessionEvidence({state, session}: {state: State; session: NonNullable<State["councilSessions"]>[number]}) {
@@ -43,7 +44,7 @@ function SessionEvidence({state, session}: {state: State; session: NonNullable<S
     const preview = displaySummary.replace(/^\(AI Generated\)\.\s*/, "").replace(/^#{1,6}\s+/gm, "").replace(/\*\*|__/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\s+/g, " ").trim();
     const counts = ["pending", "accepted", "deferred", "rejected"].map(status => ({status, count: recommendations.filter(r=>r.status===status).length})).filter(x=>x.count);
     return <article className="panel council-session">
-      <header className="record-heading"><div><p className="session-eyebrow">Council session</p><h3><time dateTime={session.publishedAt}>{new Date(session.publishedAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"})}</time></h3></div><span className="badge">{session.status}</span></header>
+      <header className="record-heading"><div><p className="session-eyebrow">Council session</p><h3>{nightLabel(session)}</h3><p className="quiet"><time dateTime={session.publishedAt}>{publicationLabel(session)}</time></p></div><span className="badge">{session.status}</span></header>
       {!expanded && <p className="council-session-preview">{preview || "No report text was saved for this session."}</p>}
       <div id={contentId} className="council-report-accordion" data-expanded={expanded} inert={!expanded} aria-hidden={!expanded}><div className="council-report-accordion-inner">
       {recommendations.length > 0 && <figure className="decision-chart"><figcaption>Recommendations now · {recommendations.length.toLocaleString()} total</figcaption><div className="decision-bar" aria-hidden="true">{counts.map(x=><span className={`decision-segment ${x.status}`} style={{flex:x.count}} key={x.status}/>)}</div><ul className="decision-legend">{counts.map(x=><li key={x.status}>{x.count.toLocaleString()} {x.status}</li>)}</ul></figure>}

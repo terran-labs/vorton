@@ -40,7 +40,7 @@ try {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.route("https://**", (route) => route.abort());
-  // A slow history chunk must not paint the Goals panel and then push it down
+  // A slow history chunk must not paint the Review panel and then push it down
   // when the Roundtable arrives. Keep the whole Council body behind Suspense.
   const slowCouncil = await context.newPage();
   let releaseHistory;
@@ -50,15 +50,15 @@ try {
     await route.continue();
   });
   try {
-    await slowCouncil.goto(`${origin}/lastresort/council#council-goals`, { waitUntil: "domcontentloaded" });
+    await slowCouncil.goto(`${origin}/lastresort/council#recommendations`, { waitUntil: "domcontentloaded" });
     await slowCouncil.getByText("Loading council history", { exact: true }).waitFor();
-    assert.equal(await slowCouncil.locator("#council-goals").count(), 0);
+    assert.equal(await slowCouncil.locator("#recommendations").count(), 0);
   } finally {
     releaseHistory();
   }
   await slowCouncil.locator("#council-roundtable").waitFor();
   await slowCouncil.waitForFunction(() => {
-    const target = document.getElementById("council-goals");
+    const target = document.getElementById("recommendations");
     return target && target.getBoundingClientRect().top >= 0 && target.getBoundingClientRect().top < innerHeight;
   });
   await slowCouncil.close();
@@ -94,6 +94,13 @@ try {
         200,
       );
       assert.equal(await page.getByRole("alert").count(), 0);
+      if (section === "bridge") {
+        const briefing = page.getByRole("region", { name: "Latest council briefing", exact: true });
+        await briefing.getByRole("heading", { name: "Council briefing", exact: true }).waitFor();
+        assert.equal(await briefing.getByText("Saved session", { exact: true }).count(), 1);
+        assert.equal(await briefing.getByText("No CEO submission was recorded for this session.", { exact: true }).count(), 0);
+        assert.match(await briefing.getByRole("link", { name: "Open Council", exact: false }).getAttribute("href"), /^\/lastresort\/council#session-/);
+      }
       if (section === "council") {
         assert.equal(
           await page.getByText("No saved submission", { exact: true }).count(),
@@ -102,13 +109,10 @@ try {
         );
         assert.equal(await page.locator(".page-heading").count(), 0, "Council starts with its timeline");
         assert.equal(await page.locator(".timeline-rail").evaluate(el => getComputedStyle(el).maskImage.includes("linear-gradient")), true);
-        assert.ok(await page.locator(".council-goal-details > section").count() >= 2);
-        const goalHeading = page.locator(".council-goal-heading").first();
-        if (width > 640) {
-          const title = await goalHeading.locator("h3").boundingBox();
-          const action = await goalHeading.locator("button").boundingBox();
-          assert.ok(action.x > title.x && Math.abs(action.y - title.y) < 30, "Goal prompt sits at the right of its title");
-        }
+        await page.locator("#council-session-record").waitFor();
+        assert.ok((await page.locator("#council-session-record").innerText()).trim().length > 0,
+          "The saved Council report remains available below the Roundtable");
+        await page.locator("#recommendations").waitFor();
         await page.locator(".timeline-rail").focus();
         assert.equal(await page.locator(".timeline-rail").evaluate(el => getComputedStyle(el).maskImage), "none", "Keyboard focus remains visible at the edges");
         await page.locator(".timeline-rail").evaluate(el => el.blur());
@@ -234,7 +238,9 @@ try {
     await new Promise(resolve=>setTimeout(resolve,100));
   }
   assert.ok(targetVisible,'Recommendation link remains visible after lazy Council content loads');
-  await page.getByRole("button", { name: "Accept", exact: true }).click();
+  await recommendation.getByRole("button", { name: "Accept", exact: true }).click();
+  // Wait for the saved decision before navigating away from the request.
+  await recommendation.getByText("accepted", { exact: true }).waitFor();
   await page.goto(`${origin}/lastresort/tasks`, { waitUntil: "networkidle" });
   await page
     .getByText("Run a twelve-guest opening rehearsal", { exact: true })
@@ -248,7 +254,7 @@ try {
     await page.screenshot({path:path.join(output,'failed-record-link.png'),fullPage:true});
     throw new Error(`${error.message}\n${JSON.stringify({url:page.url(),errors,body:(await page.locator('body').innerText()).slice(0,1600)})}`);
   });
-  assert.match(await linkedTask.innerText(),/Locate Room 404/);
+  await linkedTask.getByText('Locate Room 404 before accepting another booking', { exact: true }).waitFor();
   await page.goto(`${origin}/lastresort/tools`,{waitUntil:'networkidle'});
   const rooms=page.locator('#hilbert-desk'),breakfast=page.locator('#breakfast-lab');
   await rooms.getByText('4 rooms short',{exact:true}).waitFor();
@@ -280,25 +286,23 @@ try {
   await page.goto(`${origin}/lastresort/tasks`,{waitUntil:'networkidle'});
   await page.getByText('Plan breakfast for 48 guests',{exact:true}).waitFor();
   await page.goto(`${origin}/lastresort/opportunities`,{waitUntil:'networkidle'});
-  await page.getByRole('button',{name:'New opportunity',exact:true}).click();
-  const opportunityForm=page.getByRole('form',{name:'New opportunity',exact:true});
-  await opportunityForm.getByLabel('Title',{exact:true}).fill('The annual meeting of yesterday');
-  await opportunityForm.getByLabel('Estimated value (USD)').fill('250.50');
-  await opportunityForm.getByLabel('Next action',{exact:true}).fill('Confirm yesterday is available');
-  await opportunityForm.getByRole('button',{name:'Save',exact:true}).click();
-  await opportunityForm.waitFor({state:'hidden'});
+  assert.equal(new URL(page.url()).pathname, '/lastresort/forge/ideas');
+  await page.getByRole('button',{name:'New idea',exact:true}).click();
+  const ideaForm=page.getByRole('dialog',{name:'New idea',exact:true});
+  await ideaForm.getByLabel('Title',{exact:true}).fill('The annual meeting of yesterday');
+  await ideaForm.getByLabel('Owner',{exact:true}).fill('Penny Perihelion');
+  await ideaForm.getByLabel('Description',{exact:true}).fill('Confirm yesterday is available');
+  await ideaForm.getByRole('button',{name:'Save idea',exact:true}).click();
+  await ideaForm.waitFor({state:'hidden'});
   await page.reload({waitUntil:'networkidle'});
-  const opportunityCard=page.locator('article').filter({has:page.getByRole('heading',{name:'The annual meeting of yesterday',exact:true})});
-  await opportunityCard.getByRole('button',{name:'Draft next task'}).click();
-  assert.equal(await page.getByLabel('Title',{exact:true}).inputValue(),'Confirm yesterday is available');
-  await page.keyboard.press('Escape');
-  await opportunityCard.getByRole('button',{name:'Edit opportunity'}).click();
-  const editOpportunity=page.getByRole('form',{name:'Edit opportunity'});
-  await editOpportunity.getByRole('combobox',{name:'Stage',exact:true}).selectOption('won');
-  await editOpportunity.getByRole('button',{name:'Save',exact:true}).click();
-  await editOpportunity.waitFor({state:'hidden'});
-  await page.getByRole('combobox',{name:'Show opportunities',exact:true}).selectOption('won');
-  await opportunityCard.waitFor();
+  const ideaCard=page.locator('article').filter({has:page.getByRole('heading',{name:'The annual meeting of yesterday',exact:true})});
+  await ideaCard.getByRole('button',{name:'Edit idea'}).click();
+  const editIdea=page.getByRole('dialog',{name:'Edit idea'});
+  assert.equal(await editIdea.locator('textarea[name="description"]').inputValue(),'Confirm yesterday is available');
+  await editIdea.locator('select[name="status"]').selectOption('ready');
+  await editIdea.getByRole('button',{name:'Save idea',exact:true}).click();
+  await editIdea.waitFor({state:'hidden'});
+  await ideaCard.waitFor();
   await page.goto(`${origin}/lastresort/finance`,{waitUntil:'networkidle'});
   await page.getByText('$13,820.00',{exact:true}).waitFor();
   await page.getByRole('button',{name:'New entry',exact:true}).click();
@@ -327,8 +331,10 @@ try {
   await page.goto(`${origin}/lastresort/admin/activity`,{waitUntil:'networkidle'});
   await page.getByText('Updated workspace preferences',{exact:true}).waitFor();
   const exported=await (await page.request.get(`${origin}/api/lastresort/export`)).json();
-  assert.equal(exported.opportunities.length,4);assert.equal(exported.ledger.length,5);
-  assert.equal(exported.opportunities.find(row=>row.title==='The annual meeting of yesterday').history.length,1);
+  assert.equal(exported.ideas.length,4);assert.equal(exported.ledger.length,5);
+  const savedIdea=exported.ideas.find(row=>row.title==='The annual meeting of yesterday');
+  assert.equal(savedIdea.status,'ready');
+  assert.equal(savedIdea.history.length,1);
   assert.equal(exported.financePlan.occupancy,50);assert.equal(exported.preferenceHistory.length,2);
   assert.equal(exported.requests,undefined);
   await page.goto(`${origin}/lastresort/guestbook`,{waitUntil:'networkidle'});
@@ -339,7 +345,7 @@ try {
   await page.keyboard.press('Escape');
   assert.deepEqual(errors, []);
   console.log(
-    "Desktop/mobile routes, six themes, Tools drafts, Opportunities, ledger, forecast, workspace settings, export history, Goals/Tasks and Council acceptance passed.",
+    "Desktop/mobile routes, six themes, Tools drafts, Ideas, ledger, forecast, workspace settings, export history, Goals/Tasks and Council acceptance passed.",
   );
 } finally {
   await browser?.close();

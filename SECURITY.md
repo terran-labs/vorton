@@ -1,6 +1,6 @@
 # Security
 
-Vorton is designed for one owner on a local machine. The portable host validates Host and Origin headers, requires a process-local session token for mutations, binds writes to the selected workspace, and uses revision checks to reject stale changes. State files use atomic replacement and a writer lock. These controls do not make it a multi-user internet service or an operating-system sandbox.
+Vorton is designed for one owner on a local machine. The portable host validates Host and Origin headers, requires a process-local session token for mutations, and binds browser writes to the selected workspace and reviewed server history. SQLite transactions atomically commit workspace changes, audit entries and operation receipts, with generation and revision checks to reject stale changes. These controls do not make it a multi-user internet service or an operating-system sandbox.
 
 Do not put credentials or personal records in demo fixtures, issues, screenshots, or pull requests. Do not report a suspected secret publicly. A private vulnerability-reporting channel must be configured by the repository owner before public release.
 

@@ -32,7 +32,7 @@ export async function verifyAdmin(page, origin, profile, output) {
     await page.waitForURL(base + "/integrations");
     await page.locator(".admin-card").getByRole("heading", { name: "Omi", exact: true }).waitFor();
     assert.equal(await page.locator('input[name="omi-developer-key"]').count(), 0);
-    await page.locator(".admin-card").click();
+    await page.locator(".admin-card").filter({has:page.getByRole("heading", {name:"Omi",exact:true})}).click();
     await page.waitForURL(base + "/integrations/omi");
     await page.getByLabel("Omi Developer key", { exact: true }).waitFor();
     assert.equal(await page.getByLabel("Omi Developer key", { exact: true }).getAttribute("type"), "password");

@@ -1,0 +1,22 @@
+/* Reuses the shared Admin panel and AubOS semantic tokens. */
+.council-tuning { display: grid; gap: 24px; min-width: 0; overflow-wrap: anywhere; }
+.vorton-workspace main:has(.workspace-admin[data-council-tuning="true"]) { width: min(1640px,calc(100% - 72px)); }
+.vorton-workspace .workspace-admin[data-council-tuning="true"] { width: min(100%,1560px); }
+.tuning-workbench article { min-width: 0; }
+.tuning-workbench dd { margin: 4px 0 16px; overflow-wrap: anywhere; }
+.tuning-workbench dt { font-weight: 600; }
+.council-tuning .panel { margin: 0; min-width: 0; }
+.tuning-selectors, .tuning-comparison { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.council-tuning label { display: grid; gap: 8px; margin-bottom: 16px; }
+.council-tuning input, .council-tuning select, .council-tuning textarea { min-width: 0; width: 100%; min-height: 44px; color: var(--aub-text); background: var(--aub-control-bg); border: 1px solid var(--aub-border); border-radius: var(--aub-control-radius); padding: 10px; font: inherit; }
+.council-tuning button, .council-tuning summary { min-height: 44px; }
+.council-tuning pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; font: .85rem/1.6 var(--aub-font-mono, monospace); }
+.council-tuning .tuning-report { font-family: var(--aub-font-body); max-height: 65vh; overflow: auto; padding: 12px; background: var(--aub-card-header); border-radius: var(--aub-control-radius); }
+.council-tuning details { margin: 12px 0; min-width: 0; }
+.council-tuning summary { display: flex; align-items: center; cursor: pointer; color: var(--aub-accent); }
+.council-tuning .tuning-confirm { display: flex; align-items: center; gap: 12px; }
+.council-tuning .tuning-confirm input { width: 22px; min-height: 22px; flex: 0 0 22px; }
+.tuning-run { padding: 20px; margin-top: 24px; border: 1px solid var(--aub-border); border-radius: var(--aub-card-radius); }
+@media (max-width: 800px) { .tuning-selectors, .tuning-comparison { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 650px) { .vorton-workspace main:has(.workspace-admin[data-council-tuning="true"]) { width: calc(100% - 28px); } }
+@media (forced-colors: active) { .tuning-run, .council-tuning input, .council-tuning textarea, .council-tuning select { border-color: CanvasText; } }

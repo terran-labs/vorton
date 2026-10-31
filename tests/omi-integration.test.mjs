@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { OmiIntegration } from "../server/omi-integration.mjs";
@@ -93,7 +93,7 @@ test("Council refresh surfaces historical ingestion failures", async () => {
   assert.deepEqual(calls, ["replay", "recent", "backfill"]);
 });
 async function fixture(t, list = async () => []) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "vorton-omi-"));
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "vorton-omi-")));
   t.after(() => rm(root, { recursive: true, force: true }));
   const omi = new OmiIntegration(root, ["First", "Second"], { clientFactory: () => ({ list }), clock: () => Date.parse("2026-09-28T12:00:00Z") });
   await omi.saveKey("First", { key: secret, expectedRevision: 0 });

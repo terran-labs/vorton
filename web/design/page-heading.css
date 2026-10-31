@@ -1,0 +1,17 @@
+.vorton-page-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; min-width: 0; margin-bottom: 12px; }
+.vorton-page-heading > div:first-child { min-width: 0; }
+:root .vorton-page-heading h1,
+:root[data-mode] :is(.vorton-page-heading, .page-heading, .tool-page-heading) h1 { margin: 7px 0 12px; color: var(--aub-text); background: none; -webkit-text-fill-color: currentColor; font-family: var(--aub-font-display); font-size: clamp(2.7rem, 5vw, 5.5rem); font-weight: 200; letter-spacing: -.06em; line-height: .92; overflow-wrap: anywhere; }
+:root[data-mode] :is(.vorton-workspace, .embedded-dashboard, .dashboard-shell) :is(h2, h3) { color: var(--aub-text); background: none; -webkit-text-fill-color: currentColor; font-weight: 400; }
+.vorton-page-heading .vorton-page-description { max-width: 70ch; margin: 0; color: var(--aub-text-mid); font-size: 1rem; line-height: 1.65; }
+.vorton-page-heading .vorton-page-eyebrow { margin: 0 0 8px; color: var(--aub-text-mid); font-size: .75rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.vorton-page-actions { display: flex; flex-wrap: wrap; gap: 12px; flex-shrink: 0; }
+.vorton-breadcrumbs { width: fit-content; margin-bottom: 8px; color: var(--aub-text-mid); font-size: .92rem; font-weight: 650; }
+:root .vorton-workspace .vorton-breadcrumbs { display: block; height: auto; overflow: visible; }
+:root .vorton-workspace .vorton-breadcrumbs a { display: inline; height: auto; border: 0; font: inherit; }
+.vorton-breadcrumbs ol, .vorton-breadcrumbs li { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.vorton-breadcrumbs a { color: var(--aub-accent); text-decoration: none; }
+.vorton-breadcrumbs a:hover, .vorton-breadcrumbs a:focus-visible { text-decoration: underline; text-decoration-thickness: .08em; text-underline-offset: .18em; }
+.vorton-breadcrumbs a:focus-visible { outline: 3px solid var(--aub-focus-ring); outline-offset: 3px; }
+.vorton-breadcrumb-caret { color: var(--aub-accent); font-size: 1rem; line-height: 1; }
+@media (max-width: 600px) { .vorton-page-heading { align-items: start; flex-direction: column; gap: 16px; } }

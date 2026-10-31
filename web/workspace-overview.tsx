@@ -1,5 +1,6 @@
 import type {State} from './types';
 import {CouncilAvatar} from './council-avatar';
+import {PageHeading} from './design/page-heading';
 import './workspace-overview.css';
 
 const open = (status:string) => !['done','cancelled'].includes(status);
@@ -34,7 +35,7 @@ export function OperationsOverview({state}: {state:State}) {
 export function OrganizationOverview({state}: {state:State}) {
   const base=`/${state.profile.toLowerCase()}`;
   return <section className="organization-overview">
-    <header className="page-heading"><h1>Organization</h1><p>{state.settings?.purpose || state.council?.behavior.focus}</p></header>
+    <PageHeading title="Organization" description={state.settings?.purpose || state.council?.behavior.focus}/>
     {state.council?.behavior.decisionCriteria&&<section className="panel"><h2>How we decide</h2><p>{state.council.behavior.decisionCriteria}</p><a href={`${base}/council`}>Open Council ↗</a></section>}
     <h2>People & responsibilities</h2>
     <div className="organization-roster">{state.council?.identities.map(person=>{

@@ -1,12 +1,13 @@
 "use client";
 import { ThemePreviewButton } from "./ThemePreviewButton";
+import { Tooltip } from "./Tooltip";
+import { applyAppearanceToDocument } from "./appearance-document";
 
-import { useCallback, useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import {
   APPEARANCE_DEFINITIONS,
   APPEARANCE_STORAGE_KEY,
   DEFAULT_APPEARANCE_ID,
-  getAppearanceAttributes,
   getAppearanceDefinition,
   resolveAppearanceId,
   type AppearanceDefinition,
@@ -32,13 +33,6 @@ function storeAppearance(value: AppearanceId) {
   } catch {
     return;
   }
-}
-
-function applyAppearanceToDocument(next: AppearanceId) {
-  const attributes = getAppearanceAttributes(next);
-  document.documentElement.dataset.theme = attributes.theme;
-  document.documentElement.dataset.surface = attributes.surface;
-  document.documentElement.dataset.mode = attributes.mode;
 }
 
 const APPEARANCE_TRANSITION_BLUR_OUT_MS = 90;
@@ -151,7 +145,6 @@ export function ThemeControls({ inline = false }: { inline?: boolean }) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const committedAppearanceRef = useRef<AppearanceId>(DEFAULT_APPEARANCE_ID);
   const previewAppearanceRef = useRef<AppearanceId | null>(null);
-  const appearanceTooltipId = useId();
   const appearanceId = useSyncExternalStore(
     subscribeAppearance,
     getAppearanceSnapshot,
@@ -220,12 +213,6 @@ export function ThemeControls({ inline = false }: { inline?: boolean }) {
   const content = (
       <div
         className="appearance-menu"
-        onMouseLeave={revertAppearancePreview}
-        onBlurCapture={(event) => {
-          if (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget)) {
-            revertAppearancePreview();
-          }
-        }}
       >
         <section className="appearance-menu-section" aria-labelledby="appearance-theme-heading">
           <p id="appearance-theme-heading">Theme</p>
@@ -238,8 +225,8 @@ export function ThemeControls({ inline = false }: { inline?: boolean }) {
                   theme={item}
                   active={selected}
                   variant="compact"
-                  onMouseEnter={() => previewAppearance(item.id)}
-                  onFocus={() => previewAppearance(item.id)}
+                  onPreviewStart={() => previewAppearance(item.id)}
+                  onPreviewEnd={() => { if (previewAppearanceRef.current === item.id) revertAppearancePreview(); }}
                   onClick={() => chooseAppearance(item.id)}
                 />
               );
@@ -262,6 +249,7 @@ export function ThemeControls({ inline = false }: { inline?: boolean }) {
           >
             <span className="interface-zoom-icon interface-zoom-icon-small" aria-hidden="true">A</span>
             <input
+              data-vorton-view-control
               id="interface-zoom-slider"
               className="interface-zoom-slider"
               type="range"
@@ -283,10 +271,11 @@ export function ThemeControls({ inline = false }: { inline?: boolean }) {
   </section>;
   return <details className="appearance-controls" ref={detailsRef}
     onToggle={(event) => { if (!event.currentTarget.open) revertAppearancePreview(); }}>
-    <summary className="appearance-button" aria-label={`Appearance, ${currentLabel}`} aria-describedby={appearanceTooltipId}>
+    <Tooltip asChild label="Appearance" description={currentLabel}>
+    <summary className="appearance-button" aria-label={`Appearance, ${currentLabel}`}>
       <span className="appearance-button-icon" aria-hidden="true"><AppearanceGlyph appearance={appearance} /></span>
-      <span className="appearance-tooltip" id={appearanceTooltipId} role="tooltip">{currentLabel}</span>
     </summary>
+    </Tooltip>
     {content}
   </details>;
 }

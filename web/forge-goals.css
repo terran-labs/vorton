@@ -1,0 +1,333 @@
+/* Forge Goals. Provenance: adapted from the approved Focus Lists mockup
+   (docs/mockups/forge/focus.css, goals section), mapped onto the --aub-* theme
+   tokens so every theme, light or dark, works without per-theme overrides. */
+.fg {
+  --fg-row-hover: color-mix(in srgb, var(--aub-text) 4%, transparent);
+  --fg-check: color-mix(in srgb, var(--aub-text) 32%, transparent);
+  --fg-ease: cubic-bezier(.2, .8, .2, 1);
+  display: grid; gap: 18px; min-width: 0;
+}
+/* Per-goal hue, pulled toward the text color so it reads in light and dark themes. */
+.forge .fg-ring, .forge .fg-dot, .forge .fg-goal { --fg-hue-ink: color-mix(in oklab, hsl(var(--gh, 212) 64% 50%) 80%, var(--aub-text)); }
+.fg-icon { flex: none; display: block; }
+.fg-icon.is-open { transform: rotate(90deg); }
+
+/* ------------------------------------------------------------ rail */
+.fg-rail, .vorton-workspace nav.fg-rail { display: grid; align-items: stretch; justify-content: normal; gap: 2px; height: auto; margin: 0 0 24px; overflow: visible; }
+.fg-rail-caption { margin: 0 0 10px; color: var(--aub-text-mid); font-size: .69rem; letter-spacing: .13em; text-transform: uppercase; }
+.fg-rail-list { display: grid; gap: 2px; }
+/* Restore the shared rail link look over the workspace's generic button rules. */
+.vorton-workspace .fg-rail .forge-rail-link {
+  gap: 10px; padding: 6px 10px; border: 0; border-left: 2px solid transparent;
+  border-radius: 0 var(--aub-control-radius) var(--aub-control-radius) 0; font-weight: 400;
+}
+.vorton-workspace .fg-rail .forge-rail-link > span { flex: none; min-width: 0; overflow: visible; white-space: normal; }
+.vorton-workspace .fg-rail .forge-rail-link > span:nth-of-type(2) { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vorton-workspace .fg-rail .forge-rail-link:hover { background: var(--aub-control-hover); }
+.vorton-workspace .fg-rail .forge-rail-link[aria-current="true"] { border-left-color: var(--aub-accent); background: var(--aub-accent-soft); }
+.fg-rail-icon { display: grid; place-items: center; width: 20px; color: var(--aub-accent); }
+.fg-rail-proposed .fg-rail-icon { color: var(--forge-suggest); }
+.fg-rail-gap { display: block; height: 8px; }
+.vorton-workspace .fg-rail .fg-rail-goal { align-items: flex-start; padding-top: 7px; padding-bottom: 7px; }
+.vorton-workspace .fg-rail .fg-rail-goal > span:nth-of-type(2) {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal;
+  font-family: var(--aub-font-body, inherit); font-size: .84rem; line-height: 1.25;
+}
+.fg-rail-goal .fg-ring { margin-top: 1px; }
+.fg-rail-goal.st-paused, .fg-rail-goal.st-achieved, .fg-rail-goal.st-retired { opacity: .62; }
+.fg-rail-goal[aria-current="true"] { opacity: 1; }
+.fg-rail-flag { flex: none; margin-left: auto; padding-top: 2px; color: var(--aub-text-dim); }
+.forge .fg-rail-done-toggle {
+  display: inline-flex; align-items: center; gap: 5px; justify-self: start; margin: 8px 0 2px; padding: 4px 10px;
+  border: 0; background: none; color: var(--aub-text-dim); font-size: .78rem; font-weight: 600;
+}
+.forge .fg-rail-done-toggle:hover { background: none; color: var(--aub-text); }
+.fg-rail-done-toggle .count { color: var(--aub-text-dim); font-weight: 400; }
+
+@media (max-width: 1180px) {
+  .fg-rail, .vorton-workspace nav.fg-rail { margin: 0 0 14px; }
+  .fg-rail-caption, .fg-rail-gap { display: none; }
+  .fg-rail-list { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .fg-rail-list::-webkit-scrollbar { display: none; }
+  .vorton-workspace .fg-rail .forge-rail-link, .vorton-workspace .fg-rail .fg-rail-goal {
+    flex: none; width: auto; max-width: 240px; min-height: 34px; align-items: center; padding: 5px 12px;
+    border: 1px solid var(--aub-border); border-radius: 999px; background: var(--aub-card);
+  }
+  .vorton-workspace .fg-rail .forge-rail-link[aria-current="true"] { border-color: var(--aub-accent); background: var(--aub-accent-soft); }
+  .vorton-workspace .fg-rail .fg-rail-goal > span:nth-of-type(2) { display: block; -webkit-line-clamp: unset; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fg-rail-flag { padding-top: 0; }
+  .forge .fg-rail-done-toggle { flex: none; margin: 0; }
+}
+
+/* ------------------------------------------------------------ sheets and headings */
+.fg-sheet { position: relative; min-width: 0; padding: 36px 44px 40px; border-radius: 24px; background: var(--forge-raised); box-shadow: var(--forge-shadow); }
+.fg-empty-sheet { padding: 24px; }
+.forge .fg-heading { align-items: center; margin-bottom: 20px; }
+:root[data-mode] .forge .fg-heading h1 { margin: 2px 0 6px; font-size: clamp(2.3rem, 4vw, 3.4rem); line-height: .98; }
+:root[data-mode] .forge .fg-goal-heading h1 { font-size: clamp(2rem, 3.4vw, 3rem); letter-spacing: -.045em; }
+.forge .fg-heading .vorton-page-eyebrow { margin-bottom: 6px; }
+.fg-eyebrow { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 7px; color: var(--aub-text-mid); font-family: var(--aub-font-display); font-size: .9rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.fg-eyebrow .fg-pill { font-family: var(--aub-font-body, inherit); letter-spacing: 0; text-transform: none; }
+.fg-suggest-ink { color: var(--forge-suggest); }
+.fg-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--fg-hue-ink); box-shadow: 0 0 0 2px color-mix(in srgb, var(--fg-hue-ink) 18%, transparent); }
+.fg-label { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 4px; color: var(--aub-text-mid); font-family: var(--aub-font-body, inherit); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+:root[data-mode] .forge .fg-label { color: var(--aub-text-mid); font-family: var(--aub-font-body, inherit); font-size: .72rem; font-weight: 700; letter-spacing: .08em; line-height: 1.3; }
+.fg-quiet { margin: 4px 0; padding: 8px 6px 8px 46px; color: var(--aub-text-dim); font-size: .88rem; font-style: italic; }
+.forge .fg-linkish { padding: 0; border: 0; background: none; color: var(--aub-accent); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.forge .fg-linkish:hover { background: none; text-decoration: underline; text-underline-offset: 3px; }
+.forge button.fg-ghost { border-color: transparent; color: var(--aub-text-mid); }
+.fg-empty { padding: 44px 16px; }
+.fg-empty-icon { color: var(--aub-green); opacity: .8; margin-bottom: 6px; }
+.fg-empty > span:not(.fg-empty-icon) { max-width: 46ch; }
+.fg-empty button { margin-top: 10px; }
+
+/* ------------------------------------------------------------ pills */
+.fg-pill { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 6px; background: var(--aub-card-header); color: var(--aub-text-mid); font-size: .7rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.fg-pill.st-active, .fg-pill.st-achieved { background: var(--aub-green-soft); color: var(--aub-green); }
+.fg-pill.st-paused, .fg-pill.st-blocked { background: var(--aub-amber-soft); color: var(--aub-amber); }
+.fg-pill.st-doing { background: var(--aub-accent-soft); color: var(--aub-accent); }
+.fg-pill.st-retired { color: var(--aub-text-dim); text-decoration: line-through; }
+.fg-pill.st-blocked { background: var(--aub-red-soft); color: var(--aub-red); }
+.forge .fg-review.overdue { background: var(--aub-red-soft); color: var(--aub-red); }
+
+/* ------------------------------------------------------------ proposed goals */
+.fg-proposed { display: grid; gap: 14px; }
+.fg-sheet .fg-proposed { margin: 0 0 8px; }
+.forge .fg-proposed-head {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 16px;
+  border: 1px solid var(--forge-suggest-line); border-radius: 14px; background: var(--forge-suggest-soft);
+  color: var(--aub-text-mid); font-size: .88rem; font-weight: 400; text-align: left;
+}
+.forge .fg-proposed-head:hover { background: color-mix(in srgb, var(--forge-suggest) 13%, transparent); }
+.forge .fg-proposed-head:disabled { opacity: 1; cursor: default; }
+.forge .fg-proposed-head:disabled:hover { background: var(--forge-suggest-soft); }
+.fg-proposed-head b { color: var(--forge-suggest); font-weight: 700; }
+.fg-proposed-text { flex: 1; min-width: 0; }
+.fg-proposed-go { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; color: var(--forge-suggest); font-weight: 700; white-space: nowrap; }
+.fg-faces { display: inline-flex; flex: none; }
+.fg-faces .forge-avatar { box-shadow: 0 0 0 2px var(--forge-raised); }
+.fg-faces .forge-avatar + .forge-avatar { margin-left: -4px; }
+.fg-pcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.fg-sheet .fg-pcards { grid-template-columns: 1fr; }
+.fg-pcard { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 18px 20px 16px; border-radius: 16px; outline: none; }
+.fg-pcard:focus-visible { box-shadow: 0 0 0 3px var(--aub-focus-ring, var(--aub-accent)) !important; }
+.fg-pcard-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.fg-kind { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px 1px 6px; border-radius: 6px; background: var(--aub-green-soft); color: var(--aub-green); font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+:root[data-mode] .forge .fg-pcard-title { margin: 0; font-family: var(--aub-font-display); font-size: 1.42rem; font-weight: 400; line-height: 1.15; overflow-wrap: anywhere; }
+.fg-pcard-blurb, .fg-pcard-changes { margin: -2px 0 0; color: var(--aub-text-mid); font-size: .9rem; line-height: 1.45; }
+.fg-pcard-changes { color: var(--forge-suggest); font-weight: 600; }
+.fg-targets { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.fg-target { display: inline-flex; align-items: flex-start; gap: 7px; min-width: 0; max-width: 100%; color: var(--aub-text); font-size: .84rem; }
+.fg-target > span { display: grid; min-width: 0; line-height: 1.3; overflow-wrap: anywhere; }
+.fg-target small { color: var(--aub-text-dim); font-size: .66rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.fg-target > .fg-icon { margin-top: 3px; color: var(--aub-text-dim); }
+.fg-target > .forge-avatar { margin-top: 2px; }
+.fg-pcard-prov { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--forge-raised) 70%, transparent); }
+.fg-pcard-prov .forge-provenance.long { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.fg-pcard-prov .forge-why { flex-basis: 100%; }
+.fg-pcards-page { margin-top: 6px; }
+.fg-snoozed-note { margin: 16px 0 0; }
+
+/* ------------------------------------------------------------ sections and rows */
+.fg-sec { margin-top: 30px; }
+.fg-sheet > .fg-sec:first-of-type { margin-top: 18px; }
+:root[data-mode] .forge .fg-sec-head {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 6px; padding: 0 6px;
+  color: var(--aub-accent); font-family: var(--aub-font-display); font-size: 1.22rem; font-weight: 500; letter-spacing: .005em;
+}
+:root[data-mode] .forge .fg-sec.tone-paused .fg-sec-head { color: var(--aub-amber); }
+:root[data-mode] .forge .fg-sec.tone-achieved .fg-sec-head { color: var(--aub-green); }
+:root[data-mode] .forge .fg-sec.tone-retired .fg-sec-head { color: var(--aub-text-mid); }
+:root[data-mode] .forge .fg-sec-suggest .fg-sec-head { color: var(--forge-suggest); }
+.fg-sec-count { color: var(--aub-text-dim); font-family: var(--aub-font-body, inherit); font-size: .78rem; font-weight: 600; }
+.fg-sec-sub { margin-left: auto; color: var(--aub-text-dim); font-family: var(--aub-font-body, inherit); font-size: .76rem; font-weight: 400; text-align: right; }
+.fg-rows { display: grid; gap: 2px; }
+
+/* Goal rows in the overview. */
+.forge .fg-grow {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 58px; padding: 10px 10px 10px 6px;
+  border: 0; border-radius: 12px; background: none; color: var(--aub-text); font-weight: 400; text-align: left;
+}
+.forge .fg-grow:hover { background: var(--fg-row-hover); }
+.fg-grow.st-retired .fg-grow-main b { color: var(--aub-text-dim); text-decoration: line-through; }
+.fg-grow-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.fg-grow-main b { font-size: 1rem; font-weight: 500; overflow-wrap: anywhere; }
+.fg-grow-side { display: flex; flex: none; align-items: center; gap: 10px; }
+.fg-ring { position: relative; flex: none; display: grid; place-items: center; }
+.fg-ring .forge-ring { color: var(--fg-hue-ink); }
+.fg-ring small { position: absolute; color: var(--aub-text-mid); font-size: .62rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; color: var(--aub-text-dim); font-size: .78rem; }
+.fg-meta > span { display: inline-flex; align-items: center; gap: 6px; }
+.fg-meta-horizon { max-width: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fg-meta-notes { color: var(--aub-text-dim); }
+.fg-meta-owner { color: var(--aub-text-mid); }
+
+/* Task rows with big round checkboxes. */
+.fg-row { position: relative; display: flex; align-items: flex-start; gap: 14px; min-height: 48px; padding: 11px 10px 11px 8px; border: 1.5px solid transparent; border-radius: 12px; }
+.fg-row + .fg-row::before { content: ""; position: absolute; top: -2px; left: 46px; right: 10px; height: 1px; background: var(--aub-divider); }
+.fg-row:hover { background: var(--fg-row-hover); }
+.fg-row:hover::before, .fg-row:hover + .fg-row::before, .fg-row.is-suggested::before, .fg-row.is-suggested + .fg-row::before { opacity: 0; }
+.fg-row-body { flex: 1; min-width: 0; display: grid; justify-items: start; gap: 4px; padding-top: 1px; }
+.forge .fg-row-title {
+  display: inline; max-width: 100%; padding: 0; border: 0; border-radius: 0; background: none;
+  color: var(--aub-text); font-size: 1rem; font-weight: 400; line-height: 1.35; text-align: left; overflow-wrap: anywhere;
+}
+.forge button.fg-row-title:hover { background: none; text-decoration: underline; text-decoration-color: var(--aub-border); text-underline-offset: 3px; }
+.fg-row-title.is-static { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.fg-row-owner { flex: none; padding-top: 1px; }
+.fg-row-title .forge-prio { margin-right: 6px; }
+.fg-row.is-done .fg-title-text, .fg-row.is-cancelled .fg-title-text { color: var(--aub-text-dim); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--aub-text-dim) 60%, transparent); }
+.forge .fg-new-task {
+  align-items: center; width: 100%; min-height: 44px; color: var(--aub-text-dim); font-weight: 400; text-align: left;
+  border: 1.5px solid transparent; border-radius: 12px; background: none;
+}
+.forge .fg-new-task:hover { color: var(--aub-accent); background: var(--fg-row-hover); }
+.fg-new-plus { display: grid; place-items: center; width: 24px; height: 24px; margin: 0 2px 0 4px; border-radius: 50%; background: var(--aub-accent); color: #fff; }
+.forge .fg-showdone {
+  display: inline-flex; align-items: center; gap: 4px; margin: 14px 0 6px 6px; padding: 2px 4px;
+  border: 0; background: none; color: var(--aub-text-dim); font-size: .84rem; font-weight: 600;
+}
+.forge .fg-showdone:hover { background: none; color: var(--aub-text); }
+
+/* Suggested task rows remain explicitly unconfirmed and never checkable. */
+.fg-row.is-suggested { margin: 4px 0; padding: 12px 12px 12px 8px; border-radius: 14px; outline: none; }
+.fg-row.is-suggested:focus-visible { box-shadow: 0 0 0 3px var(--aub-focus-ring, var(--aub-accent)) !important; }
+.fg-row-actions { flex: none; align-self: center; }
+
+/* The checkbox. */
+.forge .fg-check {
+  position: relative; flex: none; display: grid; place-items: center; width: 24px; height: 24px; margin: 0 2px 0 4px; padding: 0;
+  border: 1.8px solid var(--fg-check); border-radius: 50%; background: transparent; color: transparent;
+  transition: border-color .15s, background-color .15s, transform .15s;
+}
+.forge .fg-check.prio-high { border-color: color-mix(in srgb, var(--aub-red) 70%, transparent); background: color-mix(in srgb, var(--aub-red) 7%, transparent); }
+.forge .fg-check:not(:disabled):hover { border-color: var(--aub-accent); background: var(--aub-accent-soft); color: var(--aub-accent); transform: scale(1.06); }
+.fg-check .fg-icon path { stroke-width: 2.6; stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .26s var(--fg-ease) .06s; }
+.fg-check:not(:disabled):hover .fg-icon path { stroke-dashoffset: 0; opacity: .5; }
+.forge .fg-check.is-checked, .forge .fg-check.is-checked:not(:disabled):hover { transform: none; border-color: var(--aub-accent); background: var(--aub-accent); color: #fff; }
+.forge .fg-row.is-done .fg-check.is-checked { border-color: color-mix(in srgb, var(--aub-accent) 55%, transparent); background: color-mix(in srgb, var(--aub-accent) 55%, transparent); }
+.fg-check.is-checked .fg-icon path { stroke-dashoffset: 0; opacity: 1; }
+.forge .fg-check:disabled { opacity: 1; cursor: default; }
+.forge .fg-check.is-locked { border: 1px solid var(--forge-suggest-line); background: var(--forge-raised); cursor: not-allowed; }
+.forge .fg-check.is-cancelled { border-color: var(--aub-border); color: var(--aub-text-dim); }
+.fg-check::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; pointer-events: none; }
+.fg-row.is-completing .fg-check { animation: fg-pop .42s var(--fg-ease); }
+.fg-row.is-completing .fg-check::after { animation: fg-burst .6s var(--fg-ease); }
+.fg-row.is-completing .fg-title-text { color: var(--aub-text-dim); text-decoration: line-through; transition: color .3s; }
+.fg-row.is-completing { animation: fg-leave .3s var(--fg-ease) .36s forwards; }
+@keyframes fg-pop { 0% { transform: scale(1); } 35% { transform: scale(.82); } 70% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@keyframes fg-burst { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--aub-accent) 55%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
+@keyframes fg-leave { to { opacity: .35; transform: translateX(10px); } }
+
+/* ------------------------------------------------------------ goal page */
+.fg-goal { display: grid; gap: 22px; align-items: start; border-radius: 26px; }
+@container (min-width: 900px) {
+  .fg-goal { grid-template-columns: minmax(0, 1fr) 290px; }
+}
+/* Container queries measure .fg-goal itself, so the layout rule lives on its parent. */
+.fg:has(> .fg-goal) { container-type: inline-size; }
+.fg-goal.is-focused .fg-goal-sheet { animation: fg-focus 1.6s var(--fg-ease); }
+@keyframes fg-focus { 0%, 40% { box-shadow: 0 0 0 3px var(--aub-accent), var(--forge-shadow); } 100% { box-shadow: var(--forge-shadow); } }
+.fg-hero { display: flex; align-items: center; gap: 26px; margin-bottom: 18px; }
+.fg-hero .fg-heading { flex: 1; min-width: 0; margin: 0; }
+.fg-hero-ring { display: grid; justify-items: center; gap: 4px; flex: none; }
+.fg-hero-ring small { color: var(--aub-text-dim); font-size: .66rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.fg-ring-big b { position: absolute; color: var(--aub-text); font-family: var(--aub-font-display); font-size: 1.35rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.forge .fg-parent {
+  display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; padding: 0; border: 0; background: none;
+  color: var(--aub-accent); font-size: .84rem; font-weight: 600;
+}
+.forge .fg-parent:hover { background: none; text-decoration: underline; text-underline-offset: 3px; }
+.fg-goal-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 4px; color: var(--aub-text-mid); font-size: .86rem; line-height: 1.4; }
+.fg-goal-meta > span { display: inline-flex; align-items: center; gap: 6px; }
+.fg-why { margin: 0 0 16px; }
+.fg-why p { max-width: 64ch; margin: 0; color: var(--aub-text); font-size: 1.08rem; line-height: 1.55; }
+.fg-donewhen { display: grid; gap: 4px; margin-bottom: 18px; padding: 14px 16px; border-left: 3px solid var(--fg-hue-ink); border-radius: 4px 12px 12px 4px; background: var(--aub-card-header); }
+.fg-donewhen p { margin: 0; line-height: 1.5; }
+.fg-donewhen.is-missing { border-left-color: var(--aub-amber); }
+.fg-donewhen.is-missing p { color: var(--aub-text-mid); }
+.fg-goal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.vorton-workspace .fg-goal-actions button { padding: 6px 13px; font-size: .88rem; }
+.fg-goal-actions .fg-edit { margin-left: auto; }
+
+.fg-links { display: grid; gap: 14px; margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--aub-divider); }
+.fg-links ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.fg-links li { display: flex; align-items: center; gap: 6px; }
+.fg-links li .fg-icon { color: var(--aub-amber); }
+.fg-evidence summary { color: var(--aub-text-mid); font-size: .86rem; font-weight: 600; }
+.fg-evidence p { margin: 6px 0 0; white-space: pre-wrap; line-height: 1.5; }
+.fg-origin:empty { display: none; }
+.fg-origin p { margin: 16px 0 0; font-size: .86rem; }
+
+/* Aside cards: milestones and stage. */
+.fg-aside { display: grid; gap: 16px; min-width: 0; }
+.fg-card { padding: 18px 20px; border-radius: 18px; background: var(--forge-raised); box-shadow: var(--forge-shadow); }
+:root[data-mode] .forge .fg-card-head { display: flex; align-items: center; gap: 7px; margin: 0 0 14px; color: var(--aub-text-mid); font-family: var(--aub-font-display); font-size: 1.05rem; font-weight: 500; }
+.fg-timeline { position: relative; display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.fg-timeline::before { content: ""; position: absolute; left: 10px; top: 12px; bottom: 12px; width: 2px; background: var(--forge-ring-track); }
+.fg-timeline li { position: relative; display: flex; align-items: flex-start; gap: 12px; }
+.fg-timeline li > div { display: grid; gap: 1px; min-width: 0; padding-top: 1px; }
+.fg-timeline li b { font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.fg-timeline li span { color: var(--aub-text-dim); font-size: .76rem; }
+.fg-timeline li.is-done b { color: var(--aub-text-dim); text-decoration: line-through; }
+.fg-timeline li.is-next span { color: var(--fg-hue-ink); font-weight: 600; }
+.forge .fg-tl-dot {
+  position: relative; z-index: 1; flex: none; display: grid; place-items: center; width: 22px; height: 22px; padding: 0;
+  border: 2px solid var(--fg-check); border-radius: 50%; background: var(--forge-raised); color: var(--aub-card-solid);
+  transition: transform .15s, border-color .15s;
+}
+.forge .fg-tl-dot:not(:disabled):hover { border-color: var(--aub-green); background: var(--forge-raised); transform: scale(1.08); }
+.forge .fg-timeline li.is-done .fg-tl-dot { border-color: var(--aub-green); background: var(--aub-green); }
+.forge .fg-timeline li.is-next .fg-tl-dot { border-color: var(--fg-hue-ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--fg-hue-ink) 18%, transparent); }
+.fg-tl-dot .fg-icon path { stroke-width: 2.6; }
+.fg-timeline + .fg-ms-add, .fg-quiet + .fg-ms-add { margin-top: 14px; }
+.fg-card .fg-quiet { padding: 0; }
+.fg-ms-add { display: flex; align-items: center; gap: 10px; min-height: 32px; color: var(--aub-text-dim); }
+.fg-ms-add .fg-icon { margin: 0 4px; }
+.vorton-workspace .fg-ms-add input { flex: 1; min-width: 0; padding: 4px 6px; border-color: transparent; background: transparent; font-size: .88rem; }
+.vorton-workspace .fg-ms-add input:focus { border-color: var(--aub-accent); background: var(--aub-card); outline: none; }
+.vorton-workspace .fg-ms-add button { padding: 3px 10px; font-size: .8rem; }
+
+.fg-steps { display: grid; grid-template-columns: repeat(2, 1fr); margin: 0 0 12px; padding: 0; list-style: none; }
+.fg-step { position: relative; display: grid; justify-items: center; }
+.fg-step + .fg-step::before { content: ""; position: absolute; top: 11px; right: 50%; width: 100%; height: 2px; background: var(--forge-ring-track); }
+.fg-step.is-current::before, .fg-step.is-past + .fg-step::before { background: var(--aub-accent); }
+.forge .fg-step button { position: relative; z-index: 1; display: grid; justify-items: center; gap: 6px; padding: 0 4px; border: 0; background: none; color: var(--aub-text-dim); font-size: .76rem; font-weight: 600; }
+.forge .fg-step button:hover { background: none; color: var(--aub-text); }
+.forge .fg-step button:disabled { opacity: 1; cursor: default; }
+.fg-step-dot { display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--fg-check); border-radius: 50%; background: var(--forge-raised); color: #fff; }
+.fg-step.is-past .fg-step-dot { border-color: var(--aub-accent); background: var(--aub-accent); }
+.fg-step.is-current .fg-step-dot { border-color: var(--aub-accent); box-shadow: inset 0 0 0 4px var(--forge-raised), inset 0 0 0 10px var(--aub-accent); }
+.forge .fg-step.is-current button { color: var(--aub-text); }
+.fg-step-alts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--aub-text-dim); font-size: .76rem; }
+.vorton-workspace .fg-step-alt { padding: 2px 10px; border-radius: 999px; font-size: .76rem; }
+.vorton-workspace .fg-step-alt.is-current { border-color: var(--aub-amber); background: var(--aub-amber-soft); color: var(--aub-amber); opacity: 1; }
+.fg-step-hint { margin: 10px 0 0; color: var(--aub-text-mid); font-size: .82rem; }
+
+/* ------------------------------------------------------------ narrow screens */
+@media (max-width: 900px) {
+  .fg-sheet { padding: 28px 24px 30px; border-radius: 20px; }
+  .fg-hero { gap: 18px; }
+}
+@media (max-width: 640px) {
+  .fg-sheet { padding: 22px 14px 24px; border-radius: 18px; }
+  .fg-hero { flex-direction: column-reverse; align-items: flex-start; gap: 14px; }
+  .fg-hero-ring { grid-auto-flow: column; align-items: center; gap: 10px; }
+  .forge .fg-heading { align-items: stretch; }
+  :root[data-mode] .forge .fg-goal-heading h1 { font-size: 2.1rem; }
+  .fg-row { gap: 12px; padding: 11px 6px 11px 2px; }
+  .fg-row + .fg-row::before { left: 40px; }
+  .fg-row.is-suggested { flex-wrap: wrap; padding: 12px 10px 12px 4px; }
+  .fg-row-actions { width: 100%; padding-left: 40px; }
+  .fg-sec-sub { display: none; }
+  .fg-proposed-head { flex-wrap: wrap; }
+  .fg-pcard { padding: 16px 14px 14px; }
+  .fg-pcard .forge-suggest-actions button { flex: 1 1 auto; }
+  .fg-goal-actions .fg-edit { margin-left: 0; }
+  .fg-quiet { padding-left: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg *, .fg *::before, .fg *::after, .fg-goal { animation: none !important; transition: none !important; }
+}
+.vorton-workspace .fg-pcard-prov .forge-why { margin: 0; }

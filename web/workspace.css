@@ -1,6 +1,23 @@
 .vorton-workspace * {
   box-sizing: border-box;
 }
+/* Forge shares compact card surfaces; task rows retain native searchable text. */
+.vorton-workspace .forge .goal-list { align-items: start; }
+.vorton-workspace .forge .goal { gap: .7rem; }
+.vorton-workspace .forge .goal h2 { font-size: 1.1rem; }
+.vorton-workspace .forge .goal .prose { margin: 0; }
+:root .vorton-workspace .task-list { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.vorton-workspace .task-list > .task-row { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: .7rem; padding: .65rem 0; contain-intrinsic-block-size: auto 4rem; }
+.vorton-workspace .task-list .task-check { width: 22px; height: 22px; min-height: 0; margin-top: .2rem; padding: 0; border-radius: 4px; display: grid; place-items: center; border: 1px solid var(--aub-text-dim); }
+.vorton-workspace .task-check[aria-checked="true"] { background: var(--aub-control-hover); }
+.vorton-workspace .task-list .task-line { min-width: 0; }
+.vorton-workspace .task-list .task-line h2 { font-size: 1rem; line-height: 1.5; margin: 0; }
+.vorton-workspace .task-list .title-button { font-weight: 400; }
+.vorton-workspace .task-meta { color: var(--aub-text-mid); font-size: .82rem; }
+.vorton-workspace .task-meta:empty { display: none; }
+.vorton-workspace .task-details { font-size: .85rem; margin-top: .2rem; color: var(--aub-text-mid); }
+.vorton-workspace .task-details summary { width: fit-content; }
+.view-frame.council-frame { padding-top: 12px; }
 .vorton-workspace button,
 .vorton-workspace input,
 .vorton-workspace select,
@@ -509,14 +526,6 @@
 .vorton-workspace .record-footer .actions {
   margin-top: 0;
 }
-.vorton-workspace .copy-prompt {
-  display: grid;
-  gap: 6px;
-}
-.vorton-workspace .copy-prompt > span {
-  font-size: 0.8rem;
-  color: var(--aub-green);
-}
 .vorton-workspace .task-row {
   display: flex;
   align-items: start;
@@ -524,6 +533,21 @@
   gap: 25px;
   padding: 22px 0;
   border-bottom: 1px solid var(--aub-divider);
+}
+.vorton-workspace .task-list > .task-row {
+  /* Keep task text and controls in the document without laying out every
+     offscreen row during navigation. */
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 4rem;
+}
+.vorton-workspace .task-list > .task-row:focus-within,
+.vorton-workspace .task-list > .task-row:target {
+  content-visibility: visible;
+}
+@media print {
+  .vorton-workspace .task-list > .task-row {
+    content-visibility: visible;
+  }
 }
 .vorton-workspace .task-row:first-child {
   padding-top: 0;

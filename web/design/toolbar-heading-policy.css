@@ -1,0 +1,4 @@
+/* Keep one semantic page title for assistive navigation without repeating the toolbar. */
+:root .toolbar-repeated-heading { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:root .toolbar-repeated-caption { display: none; }
+:root .toolbar-repeated-container { margin-block: 0; padding-block: 0; min-height: 0; }

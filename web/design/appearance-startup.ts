@@ -1,4 +1,5 @@
-import {APPEARANCE_STORAGE_KEY, DEFAULT_APPEARANCE_ID, getAppearanceAttributes, resolveAppearanceId} from './theme-registry';
+import {APPEARANCE_STORAGE_KEY, DEFAULT_APPEARANCE_ID, resolveAppearanceId} from './theme-registry';
+import {applyAppearanceToDocument} from './appearance-document';
 import {applyInterfaceZoomToDocument} from './interface-zoom-client';
 
 // Retain the existing origin-wide preference. Migrate the former demo-only key
@@ -10,6 +11,6 @@ export function initializeAppearance() {
     localStorage.setItem(APPEARANCE_STORAGE_KEY,resolveAppearanceId(appearance));
     localStorage.removeItem('vorton-demo-appearance');
   } catch { /* Storage is optional. */ }
-  Object.assign(document.documentElement.dataset,getAppearanceAttributes(resolveAppearanceId(appearance)));
+  applyAppearanceToDocument(resolveAppearanceId(appearance));
   applyInterfaceZoomToDocument();
 }

@@ -1,6 +1,7 @@
-import React, { useEffect, useState, type ReactNode } from "react";
+import React, { useEffect, useId, useState, type ReactNode } from "react";
 import type { State, Recommendation, TaskFields } from "./types";
 import { recommendationResultKind } from "./types";
+import { nightLabel, publicationLabel } from "./council-dates";
 import "./council-decisions.css";
 
 const pretty = (value: string) => value.replaceAll(".", " ").replaceAll("-", " ");
@@ -8,15 +9,18 @@ const roleName = (state: State, role: string) => state.council?.identities.find(
 const formatDate = (date: string) => new Date(date).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 type QueueTab = "pending" | "deferred" | "history";
 
-export function CouncilDecisions({ state, busy, act, edit, renderRecommendationPrompt }: {
+export function CouncilDecisions({ state, busy, act, edit, renderRecommendationPrompt, sessionId, onSessionChange }: {
   state: State;
   busy: boolean;
   act: (action: string, payload: unknown) => Promise<boolean | undefined>;
   edit: (recommendation: Recommendation) => void;
   renderRecommendationPrompt?: (recommendation: Recommendation) => ReactNode;
+  sessionId?: string;
+  onSessionChange?: (id: string) => void;
 }) {
   const [tab, setTab] = useState<QueueTab>("pending");
   const [targetId, setTargetId] = useState("");
+  const sessionLabelId = useId();
   useEffect(()=> {
     function followHash() {
       const group = location.hash === "#recommendations" ? "pending" : location.hash === "#deferred-decisions" ? "deferred" : location.hash === "#decision-history" ? "history" : null;
@@ -24,6 +28,8 @@ export function CouncilDecisions({ state, busy, act, edit, renderRecommendationP
       const id = location.hash.replace(/^#recommendation-/, "");
       const record = state.recommendations.find(r=>r.id === id);
       if (record) {
+        const origin = state.councilSessions?.find(session => session.recommendationIds.includes(record.id));
+        onSessionChange?.(origin?.id ?? "");
         setTab(record.status === "pending" ? "pending" : record.status === "deferred" ? "deferred" : "history");
         setTargetId(record.id);
       }
@@ -35,14 +41,22 @@ export function CouncilDecisions({ state, busy, act, edit, renderRecommendationP
   useEffect(()=> {
     if (targetId) document.getElementById(`recommendation-${targetId}`)?.scrollIntoView({block:"center"});
   }, [tab, targetId]);
+  const session = state.councilSessions?.find(item => item.id === sessionId);
+  const records = sessionId === undefined ? state.recommendations : state.recommendations.filter(record => session ? session.recommendationIds.includes(record.id) : !state.councilSessions?.some(item => item.recommendationIds.includes(record.id)));
   const groups = {
-    pending: state.recommendations.filter(r=>r.status === "pending"),
-    deferred: state.recommendations.filter(r=>r.status === "deferred"),
-    history: state.recommendations.filter(r=>["accepted","rejected"].includes(r.status)).slice().reverse(),
+    pending: records.filter(r=>r.status === "pending"),
+    deferred: records.filter(r=>r.status === "deferred"),
+    history: records.filter(r=>["accepted","rejected"].includes(r.status)).slice().reverse(),
   };
   return <section className="council-decisions" id="recommendations" aria-labelledby="decision-queue-heading">
-    <div className="decision-queue-heading"><div><span className="decision-queue-eyebrow">{state.profile} · Across all sessions</span><h2 id="decision-queue-heading">Needs your decision</h2></div><span className="decision-queue-count">{groups.pending.length}</span></div>
-    <p className="decision-queue-description">Unresolved proposals stay here as the council meets. Changing the session keeps this queue intact.</p>
+    <div className="decision-queue-heading"><div><span className="decision-queue-eyebrow">{session ? nightLabel(session) : "Imported recommendations"}</span><h2 id="decision-queue-heading">Review</h2></div><span className="decision-queue-count">{groups.pending.length}</span></div>
+    {onSessionChange && <label className="decision-session-filter"><span id={sessionLabelId}>Session</span><select aria-labelledby={sessionLabelId} value={sessionId ?? ""} onChange={event => {
+      const id = event.target.value;
+      setTargetId("");
+      history.replaceState(null,"",`${location.pathname}${location.search}${id ? `#session-${id}` : "#recommendations"}`);
+      onSessionChange(id);
+    }}>{[...(state.councilSessions ?? [])].sort((a,b) => b.publishedAt.localeCompare(a.publishedAt)).map(item => <option value={item.id} key={item.id}>{nightLabel(item)}</option>)}<option value="">Imported outside a session</option></select></label>}
+    <p className="decision-queue-description">{session ? "Recommendations from this session. Select another date to review its proposals." : "Each imported recommendation shows when it was received."}</p>
     <div className="decision-queue-tabs" role="group" aria-label="Decision queue status">{([["pending","Pending"],["deferred","Deferred"],["history","Decision history"]] as const).map(([id,label])=><button type="button" key={id} id={id === "deferred" ? "deferred-decisions" : id === "history" ? "decision-history" : undefined} aria-pressed={tab === id} onClick={()=>{setTab(id);setTargetId("");history.replaceState(null,"",`${location.pathname}${location.search}#${id === "pending" ? "recommendations" : id === "deferred" ? "deferred-decisions" : "decision-history"}`);}}>{label}<span>{groups[id].length}</span></button>)}</div>
     <p className="quiet">Accepting saves a planning record. It does not start execution.</p>
     {!groups[tab].length && <p className="decision-queue-empty">{tab === "pending" ? "No pending decisions. Deferred proposals and past decisions remain in their own tabs." : tab === "deferred" ? "No deferred proposals." : "No decisions recorded yet."}</p>}
@@ -65,7 +79,7 @@ export function CouncilDecisions({ state, busy, act, edit, renderRecommendationP
                     </div>
                     <span className="badge">{r.status}</span>
                   </div>
-                  <p className="decision-origin">{origin ? <a href={`#session-${origin.id}`}>Council session · {formatDate(origin.publishedAt)}</a> : <span>Imported outside a session · {formatDate(r.createdAt)}</span>}</p>
+                  <p className="decision-origin">{origin ? <a href={`#session-${origin.id}`} title={publicationLabel(origin)}>{nightLabel(origin)}</a> : <span>Imported outside a session · {formatDate(r.createdAt)}</span>}</p>
                   <p className="prose">{r.rationale}</p>
                   <details className="decision-support"><summary>Evidence and proposed record</summary>
                   {changes.length>0&&<div style={{overflowX:"auto"}}><table><caption>Proposed changes</caption><thead><tr><th>Property</th><th>Current</th><th>Proposed</th></tr></thead><tbody>{changes.map(([key,value])=><tr key={key}><th>{key}</th><td>{JSON.stringify((target as unknown as Record<string,unknown>)[key])??"Not set"}</td><td>{JSON.stringify(value)}</td></tr>)}</tbody></table></div>}
