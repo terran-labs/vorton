@@ -8,6 +8,14 @@ import { Store } from "../server/store.mjs";
 import { councilPacket, publishCouncil } from "../server/council.mjs";
 import { reviewPacket } from "../server/review.mjs";
 
+test("Council configuration rejects missing identity IDs and nonobject behavior extensions", () => {
+  for (const id of [undefined, null, 42, {}, []]) {
+    assert.throws(() => resolveCouncil("Example", { additionalIdentities: [{ ...coreIdentities[0], id }] }), /invalid identity ID/);
+  }
+  for (const behavior of [5, true, false, "", [], ["focus"]])
+    assert.throws(() => resolveCouncil("Example", { behavior }), /expected an object/);
+});
+
 test("organizations inherit nine identities without mutating core or each other", () => {
   const extra={...coreIdentities[0],id:"LOCAL",name:"Local advisor",fictional:false};
   const a=resolveCouncil("AubOS",{additionalIdentities:[extra],identityOverrides:{CTO:{mandate:"Personal technical strategy"}},behavior:{focus:"Personal priorities",challengeRounds:2}});

@@ -1,13 +1,13 @@
 import React, { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import type { State } from "./types";
 import { CouncilCalendar } from "./council-calendar";
+import { pacificDate, datePosition, sessionDate, nightLabel, publicationLabel, councilTimezone } from "./council-dates";
+import { timelineDayLabel as dayLabel, timelineFullLabel as fullLabel, retainTimelineGeometry } from "./council-timeline-format";
 
 type Session = NonNullable<State["councilSessions"]>[number];
 const DAY = 86_400_000;
 // Use calendar dates as integer positions, so daylight saving cannot skip days.
-const dayOf = (value: string | Date) => { const date = new Date(value); return Math.floor(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()) / DAY); };
-const dayLabel = (day: number) => new Date(day*DAY).toLocaleDateString(undefined,{month:"short",day:"numeric",timeZone:"UTC"});
-const fullLabel = (day: number) => new Date(day*DAY).toLocaleDateString(undefined,{dateStyle:"full",timeZone:"UTC"});
+const dayOf = (value: string | Date) => datePosition(pacificDate(value));
 
 export function SessionTimeline({sessions,selected,onSelect}: {sessions: Session[];selected:string;onSelect:(id:string)=>void}) {
   const today = dayOf(new Date());
@@ -23,7 +23,7 @@ export function SessionTimeline({sessions,selected,onSelect}: {sessions: Session
   const activeDay = sessions.find(s=>s.id === selected);
   const items: {key:string;day:number;session?:Session}[] = [];
   const byDay = new Map<number,Session[]>();
-  sessions.forEach(session=> { const day=dayOf(session.publishedAt); byDay.set(day,[...(byDay.get(day) ?? []),session]); });
+  sessions.forEach(session=> { const day=datePosition(sessionDate(session)); byDay.set(day,[...(byDay.get(day) ?? []),session]); });
   for(let day=range.start;day<=range.end;day++) {
     const daily=byDay.get(day);
     if(daily?.length) daily.forEach(session=>items.push({key:session.id,day,session}));
@@ -35,7 +35,7 @@ export function SessionTimeline({sessions,selected,onSelect}: {sessions: Session
     const canvas=document.documentElement;
     const measure=()=> {
       const box=content.getBoundingClientRect(); const width=canvas.clientWidth;
-      setGeometry({width,left:-box.left,right:width-box.right});
+      setGeometry(previous=>retainTimelineGeometry(previous,{width,left:-box.left,right:width-box.right}));
     };
     const observer=new ResizeObserver(measure); observer.observe(canvas); observer.observe(content); measure();
     window.addEventListener("resize",measure);
@@ -62,7 +62,7 @@ export function SessionTimeline({sessions,selected,onSelect}: {sessions: Session
   },[range,geometry]);
   useEffect(()=> {
     if(!activeDay || !initialized.current) return;
-    const day=dayOf(activeDay.publishedAt);
+    const day=datePosition(sessionDate(activeDay));
     if(day<range.start || day>range.end) { const end=Math.min(today,day+30); initialized.current=false; reveal.current=selected; setRange({start:end-90,end}); }
     else {
       const el=rail.current;
@@ -100,7 +100,7 @@ export function SessionTimeline({sessions,selected,onSelect}: {sessions: Session
     <div ref={heading} className="timeline-heading"><CouncilCalendar today={today} sessionDays={new Set(byDay.keys())} onJump={jumpToDay}/><button type="button" className="timeline-today" onClick={returnToday}>Today</button></div>
     <div ref={rail} className="timeline-rail" tabIndex={0} aria-label="Council dates. Scroll left for earlier sessions, right to return toward today." onScroll={extend} onKeyDown={event=>{if(event.key === "ArrowLeft" || event.key === "ArrowRight") {event.preventDefault();event.currentTarget.scrollLeft+=event.key === "ArrowLeft" ? -150 : 150;} if(event.key === "End") {event.preventDefault();returnToday();}}} style={geometry.width ? {width:geometry.width,marginLeft:geometry.left,"--timeline-right-inset":`${geometry.right}px`} as CSSProperties : undefined}>
       <ol data-present-end={range.end===today ? "true" : undefined}>{items.map(({key,day,session})=><li key={key} data-stop-key={key} data-today={day===today ? "true" : undefined}>
-        {session ? <button type="button" className="timeline-stop" aria-pressed={session.id===selected} aria-label={`${fullLabel(day)}, ${new Date(session.publishedAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}`} onClick={()=>onSelect(session.id)}><span className="timeline-day">{day===today ? "Today" : dayLabel(day)}</span><span className="timeline-orbit"><span className="timeline-dot">{new Date(day*DAY).getUTCDate()}</span></span><span className="timeline-time">{new Date(session.publishedAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}</span></button>
+        {session ? <button type="button" className="timeline-stop" aria-pressed={session.id===selected} aria-label={`${nightLabel(session)}. ${publicationLabel(session)}`} title={publicationLabel(session)} onClick={()=>onSelect(session.id)}><span className="timeline-day">{day===today ? "Today" : dayLabel(day)}</span><span className="timeline-orbit"><span className="timeline-dot">{new Date(day*DAY).getUTCDate()}</span></span><span className="timeline-time">{session.councilNight && session.councilNight !== pacificDate(session.publishedAt) ? "Catch-up" : new Date(session.publishedAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit",timeZone:councilTimezone})}</span></button>
           : <div className="timeline-stop timeline-vacant" aria-label={`${fullLabel(day)}, no session`}><span className="timeline-day">{day===today ? "Today" : dayLabel(day)}</span><span className="timeline-orbit"><span className="timeline-dot"/></span><span className="timeline-time">{day===today ? "No briefing yet" : ""}</span></div>}
       </li>)}</ol>
     </div>

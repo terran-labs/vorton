@@ -1,0 +1,231 @@
+/* Forge Tasks board. Provenance: adapted from docs/mockups/forge/board.css
+   (Flow Board concept), simplified and mapped onto the shared --aub-* tokens. */
+.ftb {
+  --ftb-col-bg: color-mix(in srgb, var(--aub-text) 3.5%, transparent);
+  --ftb-col-line: color-mix(in srgb, var(--aub-text) 8%, transparent);
+  --ftb-card: var(--aub-card-solid);
+  --ftb-card-line: color-mix(in srgb, var(--aub-text) 9%, transparent);
+  --ftb-on-fill: var(--aub-card-solid);
+  --ftb-doing: var(--aub-amber);
+  --ftb-blocked: var(--aub-red);
+  --ftb-done: var(--aub-green);
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  margin-left: 0;
+}
+.ftb .vorton-page-heading { margin-bottom: 0; }
+.ftb-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ------------------------------------------------------------ board */
+.ftb-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(184px, 1fr));
+  align-items: start;
+  gap: 12px;
+  padding-bottom: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+/* The Council column is a little wider so its four triage buttons fit on one line. */
+.ftb-board[data-columns="1"] { grid-template-columns: minmax(0, 1fr); }
+.ftb-status-rail { margin-bottom: 20px; }
+.ftb-status-rail > p { margin: 0 0 9px; color: var(--aub-text-mid); font-size: .69rem; letter-spacing: .13em; text-transform: uppercase; }
+.ftb-status-options { display: grid; gap: 4px; }
+.vorton-workspace .ftb-status-options button { display: flex; justify-content: space-between; gap: 14px; padding: 10px 12px; border: 0; border-left: 2px solid transparent; border-radius: 0 8px 8px 0; background: transparent; text-align: left; }
+.vorton-workspace .ftb-status-options button[aria-pressed="true"] { border-left-color: var(--aub-accent); background: var(--aub-accent-soft); color: var(--aub-accent); }
+.ftb-status-options button > span:last-child { color: var(--aub-text-dim); font-size: .78rem; }
+.ftb-board[data-columns="5"] { grid-template-columns: minmax(224px, 1.12fr) repeat(4, minmax(184px, 1fr)); }
+
+.ftb-col {
+  display: flex; flex-direction: column; min-width: 0;
+  border: 1px solid var(--ftb-col-line); border-radius: 12px; background: var(--ftb-col-bg);
+  transition: background-color .15s, box-shadow .15s, opacity .15s;
+}
+.ftb-col-head { display: flex; align-items: center; gap: 7px; min-height: 26px; padding: 11px 12px 4px 14px; }
+:root[data-mode] .ftb-col-head h2 {
+  margin: 0; color: var(--aub-text); font-family: var(--aub-font-display); font-size: 1.1rem; font-weight: 500; letter-spacing: .005em; line-height: 1.2; white-space: nowrap;
+}
+.ftb-count { color: var(--aub-text-dim); font-size: .8rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ftb .ftb-col-note { margin: 0 14px 0 36px; color: var(--aub-text-dim); font-size: .76rem; }
+.ftb-col-body { display: flex; flex-direction: column; gap: 8px; min-height: 96px; padding: 8px; }
+
+.ftb-stage { flex: none; width: 15px; height: 15px; color: var(--aub-text-dim); }
+.ftb-stage.st-suggested { color: var(--forge-suggest); }
+.ftb-stage.st-todo { color: var(--aub-accent); }
+.ftb-stage.st-doing { color: var(--ftb-doing); }
+.ftb-stage.st-blocked { color: var(--ftb-blocked); }
+.ftb-stage.st-done { color: var(--ftb-done); }
+
+/* The Council column: a dashed violet review inbox. */
+.ftb-col.col-suggested { border: 1.5px dashed var(--forge-suggest-line); background: linear-gradient(180deg, var(--forge-suggest-soft), transparent 70%), var(--ftb-col-bg); }
+:root[data-mode] .ftb-col.col-suggested h2 { color: var(--forge-suggest); }
+
+.ftb-empty {
+  display: grid; place-items: center; min-height: 64px; margin: 0; padding: 14px;
+  border: 1px dashed var(--ftb-col-line); border-radius: 10px; color: var(--aub-text-dim); font-size: .8rem; text-align: center;
+}
+.vorton-workspace .ftb .ftb-link {
+  align-self: flex-start; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent;
+  color: var(--aub-text-mid); font-size: .78rem; font-weight: 700; cursor: pointer;
+}
+.vorton-workspace .ftb .ftb-link:hover, .vorton-workspace .ftb .ftb-link:focus-visible { background: var(--aub-control-hover); color: var(--aub-text); }
+.ftb-snoozed, .ftb-cancelled { display: flex; flex-direction: column; gap: 8px; }
+.ftb-cancelled { margin-top: 2px; padding-top: 6px; border-top: 1px solid var(--ftb-col-line); }
+
+/* ------------------------------------------------------------ cards */
+.ftb-card {
+  position: relative; display: grid; gap: 8px; padding: 11px 12px 10px;
+  border: 1px solid var(--ftb-card-line); border-radius: 10px; background: var(--ftb-card);
+  box-shadow: 0 1px 1px rgb(0 0 30 / .04), 0 1px 3px rgb(0 0 40 / .06);
+  cursor: pointer; transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease, opacity .14s;
+}
+.ftb-card.can-drag { cursor: grab; }
+.ftb-card.can-drag:active { cursor: grabbing; }
+.ftb-card:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--aub-accent) 32%, var(--ftb-card-line)); box-shadow: var(--forge-shadow); }
+.vorton-workspace .ftb-card:focus-visible { outline: 2px solid var(--aub-accent); outline-offset: 1px; }
+.ftb-card[style*="--g"]:not(.is-suggested)::before {
+  content: ""; position: absolute; top: 11px; bottom: 11px; left: -1px; width: 3px; border-radius: 0 3px 3px 0; background: hsl(var(--g) 62% 55%);
+}
+.ftb-card.is-focused { border-color: var(--aub-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--aub-accent) 22%, transparent); animation: ftb-glow 1.6s ease-out 2; }
+@keyframes ftb-glow { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--aub-accent) 14%, transparent); } }
+.ftb-card.is-saving { opacity: .55; pointer-events: none; }
+.ftb-card.is-dragging { opacity: .35; }
+
+.ftb-card-head { display: flex; align-items: flex-start; gap: 8px; }
+.ftb-card-head .ftb-title { flex: 1 1 auto; min-width: 0; }
+.vorton-workspace .ftb .ftb-title {
+  display: block; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 4px; background: none;
+  color: var(--aub-text); font-family: var(--aub-font-body); font-size: .94rem; font-weight: 500; line-height: 1.3; text-align: left; overflow-wrap: anywhere; cursor: pointer;
+}
+.vorton-workspace .ftb .ftb-title:hover { background: none; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--aub-text) 35%, transparent); text-underline-offset: 3px; }
+.ftb-card .forge-prio { line-height: 1.3; }
+.ftb-card.st-done .ftb-title, .ftb-card.st-cancelled .ftb-title { color: var(--aub-text-dim); }
+.ftb-card.st-done .ftb-title { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--aub-text-dim) 60%, transparent); }
+.ftb-card.st-cancelled { opacity: .72; }
+
+.ftb-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-width: 0; }
+.ftb-goal {
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%; padding: 2px 8px 2px 6px; border-radius: 6px;
+  background: hsl(var(--g) 65% 50% / .12); color: color-mix(in srgb, hsl(var(--g) 60% 38%) 62%, var(--aub-text));
+  font-size: .73rem; font-weight: 600;
+}
+.ftb-goal i { flex: none; width: 7px; height: 7px; border-radius: 2px; background: hsl(var(--g) 62% 52%); }
+.ftb-goal span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ftb-goal.is-suggested-goal { outline: 1px solid var(--forge-suggest-line); outline-offset: -1px; }
+.ftb-meta .forge-chip { padding: 2px 7px; border-radius: 6px; font-size: .72rem; }
+.ftb-owner { display: inline-flex; flex: none; margin-top: -1px; }
+
+/* Suggested cards. */
+.ftb-card.is-suggested { gap: 7px; cursor: default; }
+.ftb-card.is-suggested[draggable="true"] { cursor: grab; }
+.ftb-card.is-suggested:hover { border-color: var(--forge-suggest) !important; }
+.ftb-card.is-suggested .forge-unconfirmed { font-size: .62rem; letter-spacing: .07em; }
+.ftb-change-label { color: var(--aub-text-dim); font-weight: 600; }
+.ftb-changes { display: grid; gap: 2px; margin: 0; padding: 5px 8px; border-radius: 7px; background: var(--forge-suggest-soft); color: var(--aub-text-mid); font-size: .78rem; list-style: none; }
+.ftb-card .forge-provenance { gap: 3px 8px; font-size: .74rem; }
+.ftb-card .forge-suggest-actions { flex-wrap: nowrap; gap: 4px; }
+.vorton-workspace .ftb-card .forge-suggest-actions.compact button { flex: none; padding: 3px 8px; border-radius: 7px; }
+.vorton-workspace .ftb-card .forge-suggest-actions.compact .forge-confirm { flex: 1 1 auto; }
+
+/* ------------------------------------------------------------ drag states */
+.ftb-board[data-dragging] .ftb-col:not(.is-target) { opacity: .55; }
+.ftb-board[data-dragging] .ftb-col.is-target { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--aub-accent) 45%, transparent); }
+.ftb-board[data-dragging] .ftb-col.is-over { background: var(--aub-accent-soft); box-shadow: inset 0 0 0 2px var(--aub-accent); }
+.ftb-board[data-dragging="suggestion"] .ftb-col.is-over { background: linear-gradient(var(--forge-suggest-soft), var(--forge-suggest-soft)), var(--aub-accent-soft); box-shadow: inset 0 0 0 2px var(--forge-suggest); }
+
+/* ------------------------------------------------------------ stage pills (small screens) */
+.ftb-pills { display: none; }
+.vorton-workspace .ftb .ftb-pill {
+  display: inline-flex; flex: none; align-items: center; gap: 6px; padding: 6px 11px; border: 1px solid var(--ftb-col-line); border-radius: 999px;
+  background: var(--ftb-col-bg); color: var(--aub-text-mid); font-size: .84rem; font-weight: 600; white-space: nowrap; cursor: pointer;
+}
+.vorton-workspace .ftb .ftb-pill[aria-selected="true"] { border-color: var(--aub-accent); background: var(--aub-accent-soft); color: var(--aub-text); }
+.vorton-workspace .ftb .ftb-pill.is-suggest { border-style: dashed; border-color: var(--forge-suggest-line); }
+.vorton-workspace .ftb .ftb-pill.is-suggest[aria-selected="true"] { border-color: var(--forge-suggest); background: var(--forge-suggest-soft); }
+.ftb-pill .ftb-count { font-size: .76rem; }
+
+@media (max-width: 1180px) {
+  /* The filter rail moves above the content; the board uses the full column and scrolls if needed. */
+  .ftb { --ftb-width: 100%; }
+}
+@media (max-width: 700px) {
+  .ftb-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ftb-drag-hint { display: none; }
+  .ftb-col-head { display: none; }
+  .ftb .ftb-col-note { margin: 10px 14px 0; }
+  .ftb-board, .ftb-board[data-columns="5"] { grid-template-columns: minmax(0, 1fr); overflow: visible; }
+  .ftb-col:not(.is-active) { display: none; }
+  .ftb-col-body { min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ftb-card, .ftb-col { transition: none; }
+  .ftb-card:hover { transform: none; }
+  .ftb-card.is-focused { animation: none; }
+}
+.ftb-snoozed .ftb-card { opacity: .82; }
+.ftb-snoozed .ftb-card:hover, .ftb-snoozed .ftb-card:focus-within { opacity: 1; }
+
+/* Completion checkbox: the same guarded status change as dragging to Done. */
+.vorton-workspace .ftb-check {
+  display: grid; flex: none; place-items: center; width: 20px; height: 20px; margin-top: 1px; padding: 0;
+  border: 1.5px solid color-mix(in srgb, var(--aub-text-mid) 55%, transparent); border-radius: 50%;
+  background: transparent; color: var(--aub-card-solid); font-size: .7rem; font-weight: 800; line-height: 1; cursor: pointer;
+}
+.vorton-workspace .ftb-check:hover:not(:disabled) { border-color: var(--aub-green); background: var(--aub-green-soft); }
+.vorton-workspace .ftb-check.is-done { border-color: var(--aub-green); background: var(--aub-green); }
+.vorton-workspace .ftb-check:disabled { cursor: default; opacity: .5; }
+.ftb-governed { margin-top: 6px; color: var(--aub-text-mid); font-size: .78rem; }
+.ftb-governed summary { cursor: pointer; color: var(--aub-text-dim); font-weight: 600; }
+.ftb-governed p { margin: 6px 0; }
+.vorton-workspace .ftb-governed button { padding: 3px 9px; font-size: .78rem; }
+
+/* Compact views share the same content width as Goals and Ideas. */
+.ftv-rail-controls { display: grid; gap: 12px; margin-bottom: 20px; min-width: 0; }
+.ftv-rail-controls > p { margin: 0; color: var(--aub-text-mid); font-size: .69rem; letter-spacing: .13em; text-transform: uppercase; }
+.ftv-rail-controls .ftb-status-rail { margin-bottom: 0; }
+.ftv-switch { display: flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--ftb-col-line); border-radius: 10px; }
+.vorton-workspace .ftv-switch button { padding: 7px 13px; border: 0; border-radius: 7px; background: transparent; color: var(--aub-text-mid); font-size: .9rem; }
+.vorton-workspace .ftv-switch button[aria-pressed="true"] { background: var(--aub-text); color: var(--aub-card-solid); }
+.vorton-workspace .ftv-scope { display: grid; gap: 6px; margin: 0; color: var(--aub-text-mid); font-size: .8rem; }
+.ftv-scope select { width: 100%; min-width: 0; max-width: 100%; }
+.ftv-review { border: 1px solid var(--ftb-col-line); border-radius: 10px; background: var(--forge-suggest-soft); }
+.ftv-review > summary { padding: 13px 16px; cursor: pointer; color: var(--aub-text-mid); font-weight: 600; }
+.ftv-review > summary span { margin-left: 7px; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.ftv-review > summary small { margin-left: 16px; color: var(--aub-text-dim); font-size: .78rem; font-weight: 400; }
+.ftv-review-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 0 16px 16px; }
+.ftv-review-body > p, .ftv-review-body > details { grid-column: 1 / -1; color: var(--aub-text-mid); font-size: .85rem; }
+.ftv-review-body > details > summary { cursor: pointer; padding-bottom: 12px; }
+.ftv-review-body > details > article { margin-bottom: 12px; }
+.ftv-list, .ftv-agenda, .ftv-goals { display: grid; gap: 32px; margin-top: 12px; }
+.ftv-group { min-width: 0; }
+.ftv-group > header { display: flex; align-items: baseline; gap: 10px; margin: 0 0 12px; }
+:root[data-mode] .ftv-group h2 { margin: 0; color: var(--aub-text); font-size: 1.35rem; font-weight: 500; }
+.ftv-group > header > span { color: var(--aub-text-dim); font-size: .8rem; }
+.ftv-description { margin: -4px 0 14px; color: var(--aub-text-mid); font-size: .85rem; }
+.ftv-rows { display: grid; gap: 2px; }
+.ftv-rows .ftb-card { grid-template-columns: minmax(0, 1fr) auto; padding: 13px 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; box-shadow: none; gap: 5px; }
+.ftv-rows .ftb-card-head { grid-column: 1 / -1; }
+.ftv-rows .ftb-card:hover { background: var(--forge-suggest-soft); transform: none; }
+.ftv-rows .ftb-card:focus-visible { border-color: var(--aub-text-mid); }
+.ftv-rows .ftb-meta { grid-column: 1; margin-left: 28px; }
+.ftv-rows .ftb-governed { grid-column: 2; grid-row: 2; margin: 0; }
+.ftv-rows .ftb-governed[open] { grid-column: 1 / -1; grid-row: auto; margin-left: 28px; }
+.ftv-rows .ftb-governed summary { min-height: 24px; padding-block: 2px; font-size: .72rem; font-weight: 400; }
+.ftv .ftb-card::before { display: none; }
+.ftv .ftb-goal { background: transparent; color: var(--aub-text-dim); padding-left: 0; font-weight: 400; }
+.ftv .ftb-goal i { background: var(--aub-text-dim); width: 5px; height: 5px; border-radius: 50%; }
+.ftv .forge-avatar { background: var(--forge-suggest-soft); color: var(--aub-text-mid); }
+.forge .ftv .forge-prio { color: var(--aub-text-mid); font-size: .7rem; }
+.ftv .ftb-stage { color: var(--aub-text-mid); }
+.forge .ftv .forge-chip { background: transparent; color: var(--aub-text-dim); font-weight: 400; }
+.ftv .forge-chip.overdue { color: var(--aub-text-mid); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.ftv-empty { padding: 24px 12px; color: var(--aub-text-dim); font-size: .9rem; }
+@media (max-width: 700px) {
+  .vorton-workspace .ftv-switch button { padding: 7px 10px; }
+  .ftv-review > summary small { display: block; margin: 5px 0 0 17px; }
+  .ftv-review-body { grid-template-columns: minmax(0, 1fr); padding: 0 10px 10px; }
+  .ftv-rows .ftb-card { padding-left: 0; padding-right: 0; }
+  .ftv-rows .ftb-governed summary { min-height: 44px; padding-block: 10px; }
+}

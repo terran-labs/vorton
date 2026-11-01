@@ -54,3 +54,16 @@ test("runtime symlink escape is rejected before writing", async t => {
   await assert.rejects(vault.run("First", "omi", tx => tx.put("state", {}), { create: true }), /symlink/);
   assert.deepEqual(await readdir(outside), []);
 });
+
+test("promise-returning transactions and visitors roll back their synchronous writes", async t => {
+  const { vault } = await fixture(t);
+  await vault.run("First", "omi", tx => tx.put("fixture", { revision: 1 }), { create: true });
+  await assert.rejects(vault.run("First", "omi", tx => {
+    tx.put("fixture", { revision: 2 }); return Promise.resolve("not a synchronous receipt");
+  }), error => error.status === 500 && /must be synchronous/.test(error.message));
+  await assert.rejects(vault.run("First", "omi", tx => {
+    tx.scan("fixture", () => { tx.put("extra", { transient: true }); return Promise.resolve(); });
+  }), error => error.status === 500 && /must be synchronous/.test(error.message));
+  assert.deepEqual(await vault.run("First", "omi", tx => tx.get("fixture")), { revision: 1 });
+  assert.equal(await vault.run("First", "omi", tx => tx.get("extra")), null);
+});

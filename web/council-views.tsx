@@ -4,14 +4,14 @@ import { CouncilAvatar } from "./council-avatar";
 import { getSessionVoices, type CouncilVoice } from "./council-presentation";
 import "./council-views.css";
 import { SessionTimeline } from "./council-timeline";
+import { sessionDate, nightLabel, publicationLabel } from "./council-dates";
 import { LoadingIndicator } from "./loading-indicator";
 
 type Session = NonNullable<State["councilSessions"]>[number];
 type OpenSubmission = { voice: CouncilVoice; anchor: HTMLButtonElement; closing?: boolean };
 const tableGeometry = { centerX: 50, centerY: 44, radiusX: 37, radiusY: 36, portraitDiameter: 86, clearance: 64, maxTableScale: .62, orbitExtent: 1.24 };
 
-const shortDate = (date: string) => new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-const fullDate = (date: string) => new Date(date).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
+const shortDate = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone:"UTC" });
 const plain = (text: string) => text.replace(/^#{1,6}\s+/gm, "").replace(/\*\*|__/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
 const accent = (index: number) => ({ "--voice-accent": `var(--aub-chart-series-${index % 7 + 1}, var(--aub-accent))` }) as CSSProperties;
 
@@ -49,7 +49,7 @@ function Roundtable({ voices, session, onOpen, expandedId }: { voices: CouncilVo
     "--council-table-height": `${2 * tableGeometry.radiusY * tableScale}%`,
   } as CSSProperties;
   return <section ref={layout} className="roundtable-layout" data-table-treatment="orrery" data-large-roster={voices.length > 10 ? "true" : undefined} aria-label="Circular council" style={geometry}>
-    <div className="council-table" aria-hidden="true"><svg className="council-orbits" viewBox="-100 -100 200 200" preserveAspectRatio="none" fill="none" stroke="currentColor"><ellipse rx="94" ry="94" vectorEffect="non-scaling-stroke"/><ellipse rx="124" ry="72" transform="rotate(28)" vectorEffect="non-scaling-stroke"/><ellipse rx="124" ry="72" transform="rotate(-28)" vectorEffect="non-scaling-stroke"/></svg><strong>{shortDate(session.publishedAt)}</strong><span className="table-instruction">Choose a voice<br/>to hear their thinking</span></div>
+    <div className="council-table" aria-hidden="true"><svg className="council-orbits" viewBox="-100 -100 200 200" preserveAspectRatio="none" fill="none" stroke="currentColor"><ellipse rx="94" ry="94" vectorEffect="non-scaling-stroke"/><ellipse rx="124" ry="72" transform="rotate(28)" vectorEffect="non-scaling-stroke"/><ellipse rx="124" ry="72" transform="rotate(-28)" vectorEffect="non-scaling-stroke"/></svg><strong>{shortDate(sessionDate(session))}</strong><span className="table-instruction">Choose a voice<br/>to hear their thinking</span></div>
     <div className="roundtable-seats">{voices.map((voice,index)=> {
       const angle = -Math.PI/2 + index * 2*Math.PI / voices.length;
       // These coordinates locate the portrait center, independent of text height.
@@ -219,9 +219,11 @@ function SubmissionDetail({ opened, state, onClose }: { opened: OpenSubmission; 
   </div>;
 }
 
-export function CouncilExperience({ state, renderEvidence }: { state: State; renderEvidence: (session: Session) => ReactNode }) {
+export function CouncilExperience({ state, renderEvidence, sessionId, onSessionChange }: { state: State; renderEvidence: (session: Session) => ReactNode; sessionId?: string; onSessionChange?: (id: string) => void }) {
   const sessions = [...(state.councilSessions ?? [])].sort((a,b)=>a.publishedAt.localeCompare(b.publishedAt));
-  const [selectedId, setSelectedId] = useState(sessions.at(-1)?.id ?? "");
+  const [localSelectedId, setLocalSelectedId] = useState(sessions.at(-1)?.id ?? "");
+  const selectedId = sessionId ?? localSelectedId;
+  const setSelectedId = (id: string) => { setLocalSelectedId(id); onSessionChange?.(id); };
   const [opened, setOpened] = useState<OpenSubmission | null>(null);
   const [hashSessionId, setHashSessionId] = useState("");
   const lastHash = useRef<string | null>(null);
@@ -230,6 +232,7 @@ export function CouncilExperience({ state, renderEvidence }: { state: State; ren
   const [historyError, setHistoryError] = useState("");
   const [historyRetry, setHistoryRetry] = useState(0);
   const selected = listed?.summaryDeferred && hydrated?.profile === state.profile && hydrated.session.id === listed.id ? hydrated.session : listed;
+  useEffect(() => { setOpened(null); }, [selected?.id]);
   useEffect(() => {
     setHistoryError("");
     if (!listed?.summaryDeferred) return;
@@ -255,6 +258,7 @@ export function CouncilExperience({ state, renderEvidence }: { state: State; ren
       lastHash.current = location.hash;
       const id = location.hash.replace(/^#session-/, "");
       if (sessions.some(s=>s.id === id)) { setSelectedId(id); setOpened(null); setHashSessionId(id); }
+      else setHashSessionId("");
     };
     chooseHash();
     window.addEventListener("hashchange", chooseHash);
@@ -262,10 +266,14 @@ export function CouncilExperience({ state, renderEvidence }: { state: State; ren
   }, [state.profile, state.councilSessions]);
   useEffect(()=> {
     if (hashSessionId && selected?.id === hashSessionId) {
-      document.getElementById(`session-${hashSessionId}`)?.scrollIntoView({block:"start"});
-      setHashSessionId("");
+      const target = document.getElementById(`session-${hashSessionId}`);
+      // A deferred report has no target until its saved body has arrived.
+      if (target) {
+        target.scrollIntoView({block:"start"});
+        setHashSessionId("");
+      }
     }
-  }, [hashSessionId, selected?.id]);
+  }, [hashSessionId, selected?.id, selected?.summaryDeferred]);
   return <div className="council-experience" data-council-layout="roundtable">
     <div id="council-timeline"><SessionTimeline sessions={sessions} selected={selected?.id ?? ""} onSelect={id=>{
       setSelectedId(id);setOpened(null);setHashSessionId("");
@@ -292,16 +300,16 @@ export function RoundtableBriefing({state}: {state: State}) {
   // Resolve the stable role from this session's saved roster, not its display name.
   const ceo = getSessionVoices(state,session).find(voice=>voice.identity.id === "CEO");
   return <section className="council-experience council-bridge-briefing" aria-label="Latest council briefing">
-    <div className="council-session-brief"><div><span className="council-kicker">Latest council briefing</span><h2>{fullDate(session.publishedAt)}</h2></div><a href={`/${state.profile.toLowerCase()}/council#session-${session.id}`}>Open Council ↗</a></div>
+    <div className="council-session-brief"><div><span className="council-kicker">Latest council briefing</span><h2>{nightLabel(session)}</h2><p className="quiet">{publicationLabel(session)}</p></div><a href={`/${state.profile.toLowerCase()}/council#session-${session.id}`}>Open Council ↗</a></div>
     <div className="bridge-briefing-columns">
       <div className="bridge-council-emblem">
         <div className="council-table" aria-hidden="true"><svg className="council-orbits" viewBox="-100 -100 200 200" preserveAspectRatio="none" fill="none" stroke="currentColor"><ellipse rx="94" ry="94" vectorEffect="non-scaling-stroke"/><ellipse rx="124" ry="72" transform="rotate(28)" vectorEffect="non-scaling-stroke"/><ellipse rx="124" ry="72" transform="rotate(-28)" vectorEffect="non-scaling-stroke"/></svg></div>
         {ceo && <div className="bridge-ceo" style={accent(0)}><span className="seat-portrait"><CouncilAvatar identity={ceo.identity} size={64}/></span><strong>{ceo.identity.name}</strong></div>}
       </div>
       <article className="bridge-briefing-box" aria-labelledby={headingId}>
-        <span className="council-kicker">{ceo?.sourceLabel ?? "No saved submission"}</span>
-        <h3 id={headingId}>{ceo?.identity.name ?? "CEO"}’s briefing</h3>
-        <div className="bridge-briefing-copy">{ceo?.submission ? ceo.submission.split(/\n\s*\n/).map((paragraph,index)=><p key={index}>{plain(paragraph)}</p>) : <p>No CEO submission was recorded for this session.</p>}</div>
+        <span className="council-kicker">{ceo?.sourceLabel ?? "Saved session"}</span>
+        <h3 id={headingId}>{ceo ? `${ceo.identity.name}’s briefing` : "Council briefing"}</h3>
+        <div className="bridge-briefing-copy">{!ceo ? <p>Open Council to read this session’s saved report and member contributions.</p> : ceo.submission ? ceo.submission.split(/\n\s*\n/).map((paragraph,index)=><p key={index}>{plain(paragraph)}</p>) : <p>No CEO submission was recorded for this session.</p>}</div>
       </article>
     </div>
   </section>;

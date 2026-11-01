@@ -74,9 +74,6 @@
 .vorton-workspace .council-goal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
 .vorton-workspace .council-goal-heading > div { min-width: 0; }
 .vorton-workspace .council-goal-heading p { margin: 0; }
-.vorton-workspace .council-goal-prompt { margin-left: auto; flex: 0 0 auto; max-width: 48%; }
-.vorton-workspace .council-goal-prompt button { color: var(--aub-accent); background: var(--aub-accent-soft); border-color: transparent; border-radius: var(--aub-control-radius); }
-.vorton-workspace .council-goal-prompt button:hover { border-color: var(--aub-accent); }
 .vorton-workspace .council-goal-details { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .vorton-workspace .council-goal-details > section { padding: 16px 18px; border-radius: var(--aub-control-radius); background: var(--aub-card-header); overflow-wrap: anywhere; }
 .vorton-workspace .council-goal-details h4 { margin: 0 0 8px; color: var(--aub-text-mid); font-size: .8rem; }
@@ -85,7 +82,6 @@
 @media (max-width: 640px) {
   .vorton-workspace .council-goal-card { padding: 16px; }
   .vorton-workspace .council-goal-heading { flex-wrap: wrap; gap: 12px; }
-  .vorton-workspace .council-goal-prompt { max-width: 100%; }
   .vorton-workspace .council-goal-details { grid-template-columns: minmax(0,1fr); }
 }
 @media (forced-colors: active) { .vorton-workspace .timeline-rail { mask-image: none; } }

@@ -4,6 +4,10 @@ type IconProps = Omit<SVGProps<SVGSVGElement>, "height" | "width"> & {
   size?: number | string;
 };
 
+export function VortonSymbol({ size = 24 }: { size?: number | string }) {
+  return <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 512 512" fill="currentColor"><g transform="translate(256 256) scale(1.4) translate(-256 -260)"><path d="M125 159H189L256 307 323 159H387L278 376H234Z"/><path d="M227 145H285L256 207Z"/></g></svg>;
+}
+
 function StrokeIcon({
   children,
   size = 18,

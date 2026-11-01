@@ -1,6 +1,13 @@
 # Release gates
 
-The owner approved publishing this repository under MIT with its existing history retained. That history includes installation names, paths and integration scaffolding. This approval does not include credentials or personal runtime records. No visibility change is performed by preparation scripts.
+Public core is published under MIT in `terran-labs/vorton`. Preserve that
+repository's existing history. The private development monorepo is not the
+publication repository: never push its history or private adapters into public
+core. Export only the reviewed portable inventory and integrate it in an
+independent public checkout. Private AubOS source belongs in
+`terran-labs/vorton-aubos`, pinned to an exact reviewed core artifact. Neither
+repository may contain personal runtime records or credentials. Preparation
+scripts do not change repository visibility.
 
 1. Confirm the target repository and owner-selected license. Configure a private vulnerability-reporting channel.
 2. Review the explicit portable source inventory. Private integrations, owner-specific operations, personal records, and generated state must remain excluded.

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "erasableSyntaxOnly": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
+  },
+  "include": ["server/**/*.ts", "modules/council/**/*.ts", "scripts/demo.ts", "scripts/demo-seed.ts", "scripts/paths.ts", "scripts/council.ts", "scripts/review.ts", "scripts/backup.ts", "scripts/backup-installation.ts", "scripts/portable-backup.ts", "scripts/prepare-workspace.ts", "scripts/host.ts", "scripts/vorteo-activity.ts", "scripts/council-tuning-seed.ts", "scripts/council-tuning-supervisor.ts", "scripts/council-nightly.ts"]
+}

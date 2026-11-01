@@ -1,0 +1,60 @@
+.aubos-capture {
+  position: fixed;
+  z-index: 60;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  color: var(--aub-text);
+  font: inherit;
+}
+.aubos-capture * { box-sizing: border-box; }
+.aubos-capture button, .aubos-capture input { font: inherit; color: inherit; }
+.aubos-capture textarea { font: inherit; color: inherit; }
+.aubos-capture button { cursor: pointer; }
+.aubos-capture :focus-visible { outline: 3px solid var(--aub-accent); outline-offset: 3px; }
+.aubos-capture .aubos-capture-plus {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--aub-accent) 28%, var(--aub-border));
+  background: color-mix(in srgb, var(--aub-accent) 22%, var(--aub-card-solid));
+  color: color-mix(in srgb, var(--aub-accent) 72%, var(--aub-text));
+  box-shadow: var(--aub-card-shadow-base), inset 0 1px 0 rgb(255 255 255 / 0.22);
+  transition: transform var(--aub-ui-duration);
+}
+.aubos-capture .capture-transition { position: relative; display: block; overflow: hidden; padding: 0; border-radius: 999px; font-weight: 600; }
+.capture-transition > svg { position: absolute; left: 16px; top: 15px; }
+.capture-label { position: absolute; left: 49px; top: 50%; transform: translateY(-50%); white-space: nowrap; }
+.capture-label-out { opacity: 0; pointer-events: none; }
+.aubos-capture-plus[aria-expanded="true"] svg { transform: rotate(45deg); }
+.aubos-capture-plus svg { transition: transform var(--aub-ui-duration, 180ms) var(--aub-ui-easing, ease); }
+.aubos-capture-card {
+  position: absolute;
+  bottom: calc(100% + 0.875rem);
+  right: 0;
+  width: min(520px, calc(100vw - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-height: calc(100dvh - 7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--aub-border);
+  border-radius: var(--aub-card-radius);
+  background: var(--aub-card-solid);
+  box-shadow: var(--aub-card-shadow-base);
+}
+.aubos-capture-card header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.aubos-capture-card h2 { margin: 0; font-size: 1.25rem; }
+.aubos-capture-card header button { border: 0; background: transparent; font-size: 1.5rem; min-width: 36px; min-height: 36px; }
+.aubos-capture-card input { min-width: 0; width: 100%; padding: 0.65rem; background: var(--aub-background); border: 1px solid var(--aub-border); border-radius: var(--aub-control-radius); }
+.aubos-capture-card form button, .aubos-capture-card [role="alert"] button { border: 1px solid var(--aub-border); border-radius: var(--aub-control-radius); background: var(--aub-control-hover); padding: 0.5rem 0.75rem; }
+.aubos-capture-card button:disabled { opacity: 0.55; cursor: not-allowed; }
+.aubos-capture-card pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.capture-kinds { display: flex; gap: 1.5rem; padding: 0; margin: 1.25rem 0; border: 0; }
+.capture-kinds legend, .capture-input-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.capture-kinds label { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.aubos-capture-card .capture-kinds input { width: auto; accent-color: var(--aub-accent); }
+.capture-record { display: grid; gap: 1rem; }
+.capture-record textarea { width: 100%; resize: vertical; min-height: 10rem; max-height: 45dvh; padding: 0.9rem; border: 1px solid var(--aub-border); border-radius: var(--aub-control-radius); background: var(--aub-background); }
+.aubos-capture-card .capture-save { width: 100%; min-height: 44px; background: var(--aub-logo-background); color: var(--aub-logo-text); border-color: transparent; }
+.capture-failure p { overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .aubos-capture-plus, .aubos-capture-plus svg { transition: none; } }

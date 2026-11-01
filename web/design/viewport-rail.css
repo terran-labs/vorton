@@ -1,0 +1,20 @@
+.viewport-rail-origin { min-width: 0; }
+@media (max-width: 1180px) {
+  .viewport-rail-origin { width: 100%; flex: 0 0 100%; }
+  .vorton-workspace .viewport-rail {
+    display: flex; flex-wrap: nowrap; gap: 6px;
+    width: var(--rail-width, 100%); max-width: none;
+    margin-left: var(--rail-offset, 0px);
+    padding: 4px var(--rail-right, 18px) 8px var(--rail-left, 18px);
+    overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    border: 0; border-radius: 0;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  }
+  .vorton-workspace .viewport-rail > * { flex-shrink: 0; }
+  .viewport-rail::-webkit-scrollbar { display: none; }
+  .vorton-workspace .viewport-rail:focus-within { -webkit-mask-image: none; mask-image: none; }
+}
+@media (forced-colors: active) {
+  .vorton-workspace .viewport-rail { -webkit-mask-image: none; mask-image: none; }
+}

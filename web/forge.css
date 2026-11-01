@@ -1,6 +1,31 @@
+/* Forge views live in the shared second toolbar row. Filters float in a rail
+   at the viewport's left edge, matching the Council "On this page" rail. */
 .forge {
-  display: grid;
-  gap: 1.5rem;
+  /* Keep content clear of the fixed rail when the page gutter is narrow. */
+  padding-left: max(0px, 212px - (100vw - 100%) / 2);
+}
+.forge-content { width: min(100%, 1040px); min-width: 0; margin-inline: auto; display: grid; align-content: start; gap: 1rem; }
+/* The workspace's generic nav rules predate the shared toolbar; restore its
+   own link treatment from web/design/workspace-shell.css. */
+.vorton-workspace .section-nav-bar nav { display: block; height: 100%; gap: 0; justify-content: normal; overflow-x: auto; }
+.vorton-workspace .section-nav-bar nav a { display: grid; height: auto; border-bottom: 0; color: var(--ink-soft); font-weight: inherit; }
+.vorton-workspace .section-nav-bar nav a[aria-current="page"] { color: var(--ink); }
+.forge-rail { position: fixed; z-index: 11; top: calc(var(--navigation-height, 116px) + 28px); left: max(8px, env(safe-area-inset-left)); display: grid; align-content: start; width: 188px; max-height: calc(100dvh - var(--navigation-height, 116px) - 56px); padding: 8px 12px 18px; overflow-x: hidden; overflow-y: auto; }
+.forge-rail > p { margin: 0 0 13px; color: var(--aub-text-mid); font-size: .69rem; letter-spacing: .13em; text-transform: uppercase; }
+.forge-rail .forge-filters { display: grid; gap: 14px; }
+.vorton-workspace .forge-rail label { display: grid; gap: 5px; margin: 0; color: var(--aub-text-mid); font-size: .8rem; font-weight: 600; }
+.vorton-workspace .forge-rail :is(input, select) { width: 100%; min-width: 0; padding: 7px 10px; font-size: .88rem; }
+.forge-rail .forge-clear-filters { justify-self: start; padding: .35rem .7rem; font-size: .82rem; }
+@media (max-width: 1180px) {
+  .forge { padding-left: 0; }
+  .forge-rail { position: static; width: auto; max-height: none; margin-bottom: 1.25rem; padding: 0; overflow: visible; }
+  .forge-rail > p { display: none; }
+  .forge-rail .forge-filters { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; }
+  .forge-rail .forge-filters > label:first-child { grid-column: span 2; }
+}
+@media (max-width: 520px) {
+  .forge-rail .forge-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .forge-rail .forge-filters > label:first-child { grid-column: 1 / -1; }
 }
 .forge .page-heading {
   margin: 0;
@@ -17,14 +42,43 @@
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
+  /* Keep every summary searchable while deferring offscreen text layout.
+     Remember measured heights as cards enter the viewport. */
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 12rem;
+}
+.forge-card:focus-within,
+.forge-card:target,
+.forge-card:has(.forge-detail) {
+  content-visibility: visible;
+}
+@media print {
+  .forge-card {
+    content-visibility: visible;
+  }
 }
 .forge-card h3,
 .forge-card p {
   margin: 0;
 }
+.forge-card .forge-edit-idea {
+  align-self: flex-start;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.85em;
+}
 .forge-card .actions {
   margin-top: auto;
   flex-wrap: wrap;
+}
+.forge-summary-meta {
+  overflow-wrap: anywhere;
+}
+.forge-detail {
+  display: grid;
+  gap: 0.7rem;
+}
+.forge-detail .actions {
+  display: flex;
 }
 .forge-labels {
   display: flex;
@@ -65,9 +119,6 @@
 .forge-capture input {
   flex: 1;
   min-width: 0;
-}
-.forge-filters {
-  align-items: end;
 }
 .forge-overview {
   display: grid;

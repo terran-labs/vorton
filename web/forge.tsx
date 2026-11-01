@@ -1,29 +1,40 @@
-import React, { useEffect, useRef, useState, type ReactNode } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { forgeIndex, filterForge } from "./forge-data";
+import { fieldsFor, kindOfRecommendation, type ForgeActions } from "./forge-shared";
+import { TaskBoard } from "./forge-tasks-board";
+import { GoalsRail, GoalsView } from "./forge-goals";
+import { IdeasRail, IdeasView } from "./forge-ideas";
+import "./forge-shared.css";
+import { NAVIGATION_EVENT } from "./application/browser-router";
+import { forgeNavigation } from "./application/forge-navigation";
 import { WorkspaceNavigation } from "./design/workspace-navigation";
+import { DraftStatus, RetainedEditorDrafts, rawDraftFields, useForgeDraft } from "./forge-drafts";
+import { ForgeCapture } from "./idea-capture-form";
+import "./idea-capture.css";
+import { CaptureButton } from "./capture-button";
+import { useWorkspaceAccess, workspaceAccess } from "./application/offline-context";
+import type { DraftAct, DraftPreconditions, DraftSubmitResult } from "./forge-draft-submit";
+import { profileCache } from "./application/profile-cache";
+import { useReplica } from "./application/use-replica";
 import type {
   State,
   Idea,
   IdeaFields,
   TaskFields,
   Recommendation,
+  Task,
+  Goal,
 } from "./types";
 import "./forge.css";
+export { workspaceSections, workspaceLinks } from "./application/workspace-navigation";
 
-export const forgeViews = ["overview", "tasks", "goals", "ideas"] as const;
-export const workspaceSections = [
-  "bridge",
-  "council",
-  "forge",
-  "finance",
-  "tools",
-  "admin",
-];
-export const workspaceLinks = (profile: string) =>
-  workspaceSections.map((id) => ({
-    id,
-    label: id[0].toUpperCase() + id.slice(1),
-    path: `/${profile.toLowerCase()}/${id}`,
-  }));
+export const forgeViews = ["tasks", "goals", "ideas"] as const;
 const bands = ["unknown", "low", "medium", "high"];
 const stages = [
   "inbox",
@@ -73,7 +84,7 @@ export function OrganizationInputs({
   value,
   state,
 }: {
-  value: { projects?: string[]; tags?: string[] };
+  value: { projects?: string[] | string; tags?: string[] | string };
   state: State;
 }) {
   const records = [...state.goals, ...state.tasks, ...(state.ideas ?? [])];
@@ -84,7 +95,7 @@ export function OrganizationInputs({
           {key === "projects" ? "Projects" : "Tags"}
           <input
             name={key}
-            defaultValue={value[key]?.join(", ")}
+            defaultValue={typeof value[key] === "string" ? value[key] as string : (value[key] as string[] | undefined)?.join(", ")}
             list={`forge-${key}`}
             placeholder="Separate with commas"
           />
@@ -134,28 +145,38 @@ export function CouncilOrigin({ state, id }: { state: State; id: string }) {
     </p>
   ) : null;
 }
+export type ForgeEditorRequest =
+  | { kind: "task" | "goal"; entity?: Task | Goal; draft?: Partial<TaskFields>; recommendation?: Recommendation };
+
 export function Forge({
   state,
   view,
   busy,
   error,
   act,
-  goals,
-  tasks,
+  submitDraft,
+  openEditor,
+  editIdeaSuggestion,
   draftTask,
+  onNavigate,
 }: {
   state: State;
   view: string;
   busy: boolean;
   error: string;
   act: Act;
-  goals: (state: State) => ReactNode;
-  tasks: (state: State) => ReactNode;
+  submitDraft: DraftAct;
+  /** Opens the workspace's task or goal editor, including edit-then-accept for a suggestion. */
+  openEditor: (request: ForgeEditorRequest) => void;
+  /** Opens the idea editor that accepts a Council idea suggestion with edits. */
+  editIdeaSuggestion: (recommendation: Recommendation) => void;
   draftTask: (fields: TaskFields) => void;
+  onNavigate?: React.MouseEventHandler<HTMLAnchorElement>;
 }) {
+  const shellAccess = useWorkspaceAccess();
   const selected = forgeViews.includes(view as (typeof forgeViews)[number])
     ? view
-    : "overview";
+    : "tasks";
   const [query, setQuery] = useState(
     () => new URLSearchParams(location.search).get("q") ?? "",
   );
@@ -165,29 +186,40 @@ export function Forge({
   const [tag, setTag] = useState(
     () => new URLSearchParams(location.search).get("tag") ?? "",
   );
-  const [stage, setStage] = useState(
-    location.hash.startsWith("#idea-") ? "all" : "open",
-  );
-  const [group, setGroup] = useState("readiness");
-  const [capture, setCapture] = useState("");
+  // Each view's rail selection: a goal id, or an idea list such as "ready".
+  const [selection, setSelection] = useState<Record<string, string>>({});
+  const [taskRail, setTaskRail] = useState<HTMLDivElement | null>(null);
+  const [focusId, setFocusId] = useState(() => location.hash.slice(1));
   const [editing, setEditing] = useState<Idea | null | undefined>();
   const [graduate, setGraduate] = useState<Idea | null>(null);
   const [notice, setNotice] = useState("");
+  // A save whose outcome is unknown blocks every Forge change until current
+  // records are reviewed. Nothing is ever replayed.
+  const [unknownSave, setUnknownSave] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const base = `/${state.profile.toLowerCase()}/forge`;
+  useEffect(() => {
+    const restoreFilters = () => {
+      if (location.pathname !== base && !location.pathname.startsWith(`${base}/`)) return;
+      const params = new URLSearchParams(location.search);
+      setQuery(params.get("q") ?? "");
+      setProject(params.get("project") ?? "");
+      setTag(params.get("tag") ?? "");
+    };
+    window.addEventListener("popstate", restoreFilters);
+    window.addEventListener(NAVIGATION_EVENT, restoreFilters);
+    return () => {
+      window.removeEventListener("popstate", restoreFilters);
+      window.removeEventListener(NAVIGATION_EVENT, restoreFilters);
+    };
+  }, [base]);
+  useEffect(() => {
+    setEditing(undefined);
+    setGraduate(null);
+  }, [selected]);
   useEffect(() => {
     const key = `vorton:forge:${state.profile}`;
     try {
-      if (!view) {
-        const last = localStorage.getItem(key);
-        if (
-          last &&
-          forgeViews.includes(last as (typeof forgeViews)[number]) &&
-          last !== "overview"
-        ) {
-          location.replace(`${base}/${last}${location.search}${location.hash}`);
-          return;
-        }
-      }
       localStorage.setItem(key, selected);
     } catch {
       /* Storage can be disabled; explicit navigation still works. */
@@ -200,415 +232,172 @@ export function Forge({
   const suffix = params.size ? `?${params}` : "";
   useEffect(() => {
     history.replaceState(
-      null,
+      history.state,
       "",
       `${location.pathname}${suffix}${location.hash}`,
     );
   }, [suffix]);
-  const all = [...state.goals, ...state.tasks, ...(state.ideas ?? [])];
-  const matches = (r: {
-    title: string;
-    projects?: string[];
-    tags?: string[];
-    description?: string;
-    intent?: string;
-    notes?: string;
-    owner?: string;
-  }) =>
-    (!project || r.projects?.includes(project)) &&
-    (!tag || r.tags?.includes(tag)) &&
-    (!query ||
-      [
-        r.title,
-        r.description,
-        r.intent,
-        r.notes,
-        r.owner,
-        ...(r.projects ?? []),
-        ...(r.tags ?? []),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(query.toLowerCase()));
-  const filtered = {
-    ...state,
-    goals: state.goals.filter(matches),
-    tasks: state.tasks.filter(matches),
-    ideas: (state.ideas ?? []).filter(matches),
-  };
-  const shown = filtered.ideas.filter(
-    (i) =>
-      stage === "all" ||
-      (stage === "open"
-        ? !["archived", "graduated"].includes(i.status)
-        : i.status === stage),
+  const index = useMemo(
+    () => forgeIndex(state),
+    [state.goals, state.tasks, state.ideas, state.recommendations],
   );
-  const groups =
-    group === "readiness"
-      ? stages.filter((s) => shown.some((i) => i.status === s))
-      : group === "project"
-        ? [
-            ...new Set(
-              shown.flatMap((i) =>
-                i.projects.length ? i.projects : ["No project"],
-              ),
-            ),
-          ].sort()
-        : ["All ideas"];
-  const cards = (items: Idea[]) =>
-    items.map((idea) => (
-      <article
-        className="panel forge-card"
-        id={`idea-${idea.id}`}
-        key={idea.id}
-      >
-        <div className="record-heading">
-          <h3>
-            <button className="title-button" onClick={() => setEditing(idea)}>
-              {idea.title}
-            </button>
-          </h3>
-          <span className="badge">{idea.status}</span>
-        </div>
-        <RecordLabels record={idea} />
-        <p className="prose forge-description">
-          {idea.description ||
-            "An idea worth keeping. Add detail when you are ready."}
-        </p>
-        <CouncilOrigin state={state} id={idea.id} />
-        <dl className="forge-assessments">
-          <div>
-            <dt>Value</dt>
-            <dd>{idea.value}</dd>
-          </div>
-          <div>
-            <dt>Complexity</dt>
-            <dd>{idea.complexity}</dd>
-          </div>
-          <div>
-            <dt>Confidence</dt>
-            <dd>{idea.confidence}</dd>
-          </div>
-        </dl>
-        {idea.sourceChanged && (
-          <p role="status">
-            Source evidence changed. Current source details are shown; review
-            your earlier edits in history.
-          </p>
-        )}
-        {idea.startCondition && (
-          <p>
-            <strong>Start when:</strong> {idea.startCondition}
-          </p>
-        )}
-        {idea.reviewOn && <p>Review {idea.reviewOn}</p>}
-        {idea.goalIds.map((id) => (
-          <a key={id} href={`${base}/goals#goal-${id}`}>
-            {state.goals.find((g) => g.id === id)?.title ?? "Linked goal"}
-          </a>
-        ))}
-        <div className="actions">
-          <button disabled={busy} onClick={() => setEditing(idea)}>
-            Edit idea
-          </button>
-          {!["graduated", "archived"].includes(idea.status) && (
-            <button disabled={busy} onClick={() => setGraduate(idea)}>
-              Graduate to goal
-            </button>
-          )}
-          {idea.experiment && (
-            <button
-              onClick={() =>
-                draftTask({
-                  title: idea.experiment.slice(0, 180),
-                  notes: idea.experiment,
-                  owner: idea.owner,
-                  goalId: "",
-                  ideaIds: [idea.id],
-                  projects: idea.projects,
-                  tags: idea.tags,
-                  dueOn: "",
-                  status: "todo",
-                  priority: "normal",
-                })
-              }
-            >
-              Draft experiment
-            </button>
-          )}
-        </div>
-      </article>
-    ));
+  const filtered = useMemo(
+    () => filterForge(state, index, query, project, tag),
+    [state, index, query, project, tag],
+  );
+  useEffect(() => {
+    // A direct record link must still open when a saved filter excludes it.
+    const openFragment = () => {
+      const fragment = location.hash.slice(1);
+      setFocusId(fragment);
+      if (!/^(task|goal|idea)-/.test(fragment)) return;
+      setQuery("");
+      setProject("");
+      setTag("");
+    };
+    openFragment();
+    window.addEventListener("hashchange", openFragment);
+    return () => window.removeEventListener("hashchange", openFragment);
+  }, [state.profile]);
+  useEffect(() => {
+    if (!focusId) return;
+    const frame = requestAnimationFrame(() => document.getElementById(focusId)?.scrollIntoView({ block: "nearest" }));
+    return () => cancelAnimationFrame(frame);
+  }, [focusId, selected]);
+
+  const replica = useReplica(state.profile);
+  const online = shellAccess.managed
+    ? shellAccess.canWrite && shellAccess.profile === state.profile
+    : navigator.onLine !== false;
+  const canWrite = (online || replica.ready && !replica.historyChanged) && !unknownSave && !reviewing;
+  const recordsLabel = selected === "tasks" ? "task records" : "records";
+  async function reviewRecords() {
+    if (!online || busy || reviewing) return;
+    const ticket = workspaceAccess.getSnapshot();
+    setReviewing(true);
+    try {
+      if (ticket.managed) workspaceAccess.assertLive(ticket);
+      // A forced managed load can still join an older in-flight GET. Wait for
+      // that read to settle before requesting evidence after the unknown POST.
+      if (profileCache.read(state.profile).loading) await profileCache.load(state.profile).catch(() => undefined);
+      if (ticket.managed) workspaceAccess.assertLive(ticket);
+      await profileCache.load(state.profile, true);
+      if (ticket.managed) workspaceAccess.assertLive(ticket);
+      setUnknownSave(false);
+      setNotice(`Current ${recordsLabel} loaded. Review their status before another action.`);
+    } catch (cause) {
+      setNotice((cause as Error).message);
+    } finally {
+      setReviewing(false);
+    }
+  }
+  const actions: ForgeActions = {
+    busy,
+    canWrite,
+    local: replica.ready && !replica.historyChanged,
+    async update(kind, record, patch) {
+      const result = await submitDraft(`${kind}.update`, { id: record.id, fields: fieldsFor(kind, record, patch) },
+        { basedOnRevision: state.revision, syncGeneration: state.syncGeneration, entityVersion: record.version });
+      if (result.status === "unknown") {
+        setUnknownSave(true);
+        setNotice("A save may already have reached the server. Changes are blocked until you review current records. No action will be replayed.");
+      }
+      if (result.status === "locally-saved") setNotice(result.message);
+      return result.status === "saved" || result.status === "locally-saved";
+    },
+    async resolve(recommendation, decision) {
+      const okay = await act("recommendation.resolve", { id: recommendation.id, decision });
+      if (okay) setNotice(decision === "accepted" ? `Confirmed: ${recommendation.proposal.title}.`
+        : decision === "deferred" ? "Snoozed. It stays in Council review." : "Declined. Council will see your decision.");
+      return Boolean(okay);
+    },
+    editSuggestion(recommendation) {
+      const kind = kindOfRecommendation(recommendation);
+      if (kind === "idea") editIdeaSuggestion(recommendation);
+      else openEditor({ kind, recommendation });
+    },
+    open(kind, record, draft) {
+      if (kind === "idea") setEditing((record as Idea | undefined) ?? null);
+      else openEditor({ kind, entity: record as Task | Goal | undefined, draft });
+    },
+    graduate: setGraduate,
+    notify: setNotice,
+  };
+  const managedAubos = state.profile === "AubOS" && shellAccess.managed;
+  const capture = managedAubos ? null : <ForgeCapture key={state.profile} busy={busy} state={state} submitDraft={submitDraft} owner={state.settings?.defaultOwner ?? "Owner"} project={project} tag={tag} saved={setNotice}/>;
+  const viewProps = {
+    state: filtered,
+    full: state,
+    actions,
+    selection: selection[selected] ?? "",
+    select: (value: string) => setSelection((current) => ({ ...current, [selected]: value })),
+    focusId,
+    draftTask,
+    capture,
+  };
   return (
     <div className="forge">
-      <header className="page-heading">
-        <div>
-          <h1>Forge</h1>
-          <p>Keep the spark. Choose the work. Build what matters.</p>
-        </div>
-      </header>
-      <WorkspaceNavigation
-        profile="Forge"
-        level="secondary"
-        page={selected}
-        links={forgeViews.map((id) => ({
-          id,
-          label: id[0].toUpperCase() + id.slice(1),
-          path: `${base}/${id}${suffix}`,
-        }))}
-      />
-      <form
-        className="forge-capture"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (
-            await act("idea.create", {
-              fields: {
-                title: capture,
-                owner: state.settings?.defaultOwner ?? "Owner",
-                projects: project ? [project] : [],
-                tags: tag ? [tag] : [],
-              },
-            })
-          ) {
-            setCapture("");
-            setNotice("Idea saved to Inbox.");
-          }
-        }}
-      >
-        <label htmlFor="forge-capture">Capture an idea</label>
-        <div>
-          <input
-            id="forge-capture"
-            value={capture}
-            onChange={(e) => setCapture(e.target.value)}
-            required
-            maxLength={180}
-            placeholder="A thought is enough. You can shape it later."
-          />
-          <button disabled={busy || !capture.trim()}>Save idea</button>
-        </div>
-      </form>
-      {notice && <p role="status">{notice}</p>}
-      <div className="filters forge-filters">
-        <label>
-          Search Forge
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Find ideas, goals or tasks"
-          />
-        </label>
-        {(["project", "tag"] as const).map((key) => (
-          <label key={key}>
-            {key === "project" ? "Project" : "Tag"}
-            <select
-              value={key === "project" ? project : tag}
-              onChange={(e) =>
-                (key === "project" ? setProject : setTag)(e.target.value)
-              }
-            >
-              <option value="">All {key}s</option>
-              {[
-                ...new Set(
-                  all.flatMap(
-                    (r) => r[key === "project" ? "projects" : "tags"] ?? [],
-                  ),
-                ),
-              ]
-                .sort()
-                .map((v) => (
-                  <option key={v}>{v}</option>
-                ))}
-            </select>
-          </label>
-        ))}
-        {(query || project || tag) && (
-          <button
-            onClick={() => {
-              setQuery("");
-              setProject("");
-              setTag("");
-            }}
-          >
-            Clear filters
-          </button>
-        )}
+      <div className="section-nav-bar">
+        <WorkspaceNavigation profile="Forge" label="Forge views" level="secondary" page={selected} controls="forge-content" links={forgeNavigation(state.profile, selected, suffix).links.map(link => ({ ...link, onClick: onNavigate }))}/>
       </div>
-      {selected === "tasks" && tasks(filtered)}
-      {selected === "goals" && goals(filtered)}
-      {selected === "ideas" && (
-        <>
-          <div className="page-heading">
-            <div>
-              <h2>Ideas</h2>
-              <p>
-                Possibilities you can explore without committing to build them.
-              </p>
-            </div>
-            <button onClick={() => setEditing(null)}>
-              New idea with details
-            </button>
-          </div>
-          <div className="filters">
-            <label>
-              Readiness
-              <select value={stage} onChange={(e) => setStage(e.target.value)}>
-                {["open", ...stages, "all"].map((s) => (
-                  <option key={s}>{s}</option>
+      <aside className="forge-rail" aria-label="Forge lists and filters">
+        {selected === "tasks" && <div ref={setTaskRail} />}
+        {selected === "goals" && <GoalsRail {...viewProps} />}
+        {selected === "ideas" && <IdeasRail {...viewProps} />}
+        <p>Filters</p>
+        <div className="forge-filters" data-vorton-view-control>
+          <label>
+            Search
+            <input
+              type="search"
+              aria-label="Search Forge"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ideas, goals or tasks"
+            />
+          </label>
+          {(["project", "tag"] as const).map((key) => (
+            <label key={key}>
+              {key === "project" ? "Project" : "Tag"}
+              <select
+                value={key === "project" ? project : tag}
+                onChange={(e) =>
+                  (key === "project" ? setProject : setTag)(e.target.value)
+                }
+              >
+                <option value="">All {key}s</option>
+                {index.facets[key].map((value) => (
+                  <option key={value}>{value}</option>
                 ))}
               </select>
             </label>
-            <label>
-              Group by
-              <select value={group} onChange={(e) => setGroup(e.target.value)}>
-                <option value="readiness">Readiness</option>
-                <option value="project">Project</option>
-                <option value="none">No grouping</option>
-              </select>
-            </label>
-            <span>{shown.length} ideas</span>
-          </div>
-          {!shown.length && (
-            <p>
-              No ideas in this view. Capture one above or adjust your filters.
-            </p>
-          )}
-          {groups.map((g) => (
-            <section key={g}>
-              <h2 className="forge-group">{g}</h2>
-              <div className="forge-grid">
-                {cards(
-                  shown.filter((i) =>
-                    group === "readiness"
-                      ? i.status === g
-                      : group === "project"
-                        ? (i.projects.length
-                            ? i.projects
-                            : ["No project"]
-                          ).includes(g)
-                        : true,
-                  ),
-                )}
-              </div>
-            </section>
           ))}
-        </>
-      )}
-      {selected === "overview" && (
-        <div className="forge-overview">
-          <section>
-            <header className="record-heading">
-              <h2>In motion</h2>
-              <a href={`${base}/goals${suffix}`}>All goals</a>
-            </header>
-            <div className="forge-grid">
-              {filtered.goals
-                .filter((g) => g.status === "active")
-                .slice(0, 6)
-                .map((g) => (
-                  <article className="panel" key={g.id}>
-                    <h3>
-                      <a href={`${base}/goals#goal-${g.id}`}>{g.title}</a>
-                    </h3>
-                    <RecordLabels record={g} />
-                    <p>{g.intent}</p>
-                    <p>
-                      <strong>Next milestone:</strong>{" "}
-                      {g.milestones.find((m) => !m.done)?.title ||
-                        g.successCriteria ||
-                        "Define the next milestone"}
-                    </p>
-                    {state.tasks
-                      .filter(
-                        (t) => t.goalId === g.id && t.status === "blocked",
-                      )
-                      .map((t) => (
-                        <p key={t.id}>
-                          <strong>Blocked:</strong> {t.title}
-                        </p>
-                      ))}
-                  </article>
-                ))}
-            </div>
-            {!filtered.goals.some((g) => g.status === "active") && (
-              <p>No active goals in this view.</p>
-            )}
-          </section>
-          <section>
-            <header className="record-heading">
-              <h2>Needs action</h2>
-              <a href={`${base}/tasks${suffix}`}>All tasks</a>
-            </header>
-            <div className="forge-grid">
-              {filtered.tasks
-                .filter((t) => !["done", "cancelled"].includes(t.status))
-                .sort(
-                  (a, b) =>
-                    Number(b.status === "blocked") -
-                      Number(a.status === "blocked") ||
-                    (a.dueOn || "9999").localeCompare(b.dueOn || "9999"),
-                )
-                .slice(0, 6)
-                .map((t) => (
-                  <article className="panel" key={t.id}>
-                    <h3>
-                      <a href={`${base}/tasks#task-${t.id}`}>{t.title}</a>
-                    </h3>
-                    <RecordLabels record={t} />
-                    <p>
-                      {t.status} · {t.owner}
-                      {t.dueOn && ` · Due ${t.dueOn}`}
-                    </p>
-                  </article>
-                ))}
-            </div>
-            {!filtered.tasks.some(
-              (t) => !["done", "cancelled"].includes(t.status),
-            ) && <p>No open tasks in this view.</p>}
-          </section>
-          <section>
-            <header className="record-heading">
-              <h2>Worth revisiting</h2>
-              <a href={`${base}/ideas${suffix}`}>All ideas</a>
-            </header>
-            <p>
-              Ready ideas and ideas whose review date has arrived. Start
-              conditions still need your judgment.
-            </p>
-            <div className="forge-grid">
-              {cards(
-                filtered.ideas
-                  .filter(
-                    (i) =>
-                      !["graduated", "archived"].includes(i.status) &&
-                      (i.status === "ready" ||
-                        (i.reviewOn &&
-                          i.reviewOn <=
-                            new Date().toLocaleDateString("en-CA"))),
-                  )
-                  .slice(0, 4),
-              )}
-            </div>
-          </section>
-          <section>
-            <h2>Council proposals</h2>
-            <p>
-              {
-                state.recommendations.filter((r) =>
-                  ["pending", "deferred"].includes(r.status),
-                ).length
-              }{" "}
-              awaiting your decision.
-            </p>
-            <a href={`/${state.profile.toLowerCase()}/council#recommendations`}>
-              Review recommendations
-            </a>
-          </section>
+          {(query || project || tag) && (
+            <button
+              type="button"
+              className="forge-clear-filters"
+              onClick={() => {
+                setQuery("");
+                setProject("");
+                setTag("");
+              }}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
-      )}
+      </aside>
+      <div className="forge-content" id="forge-content">
+        {notice && <p role="status" className="forge-notice">{notice}</p>}
+        {unknownSave && <p className="forge-notice"><button type="button" disabled={!online || busy || reviewing} onClick={() => void reviewRecords()}>Review current {recordsLabel}</button></p>}
+        {selected === "tasks" && <TaskBoard key={state.profile} {...viewProps} rail={taskRail} />}
+        {selected === "goals" && <GoalsView {...viewProps} />}
+        {selected === "ideas" && <IdeasView {...viewProps} />}
+      </div>
+      <div className="aubos-capture forge-create">
+        <CaptureButton aria-haspopup="dialog" label={`New ${selected === "ideas" ? "idea" : selected === "goals" ? "goal" : "task"}`}
+          onClick={() => actions.open(selected === "ideas" ? "idea" : selected === "goals" ? "goal" : "task")} />
+      </div>
       {editing !== undefined && (
         <IdeaEditor
           key={editing?.id ?? "new"}
@@ -617,14 +406,11 @@ export function Forge({
           busy={busy}
           error={error}
           close={() => setEditing(undefined)}
-          save={async (fields) => {
-            if (
-              await act(`idea.${editing ? "update" : "create"}`, {
+          save={async (fields, preconditions, unknownRequestId, prepareAttempt) => {
+            return submitDraft(`idea.${editing ? "update" : "create"}`, {
                 id: editing?.id,
                 fields,
-              })
-            )
-              setEditing(undefined);
+              }, preconditions!, unknownRequestId, prepareAttempt);
           }}
         />
       )}
@@ -657,19 +443,37 @@ export function IdeaEditor({
   busy: boolean;
   error: string;
   close: () => void;
-  save: (fields: IdeaFields) => Promise<void>;
+  save: (fields: IdeaFields, preconditions?: DraftPreconditions, unknownRequestId?: string, prepareAttempt?: (requestId: string) => Promise<boolean>) => Promise<DraftSubmitResult | void>;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const value = {
     ...emptyIdea,
     ...(recommendation?.proposal ?? idea),
   } as IdeaFields;
+  const draft = useForgeDraft({ profile: state.profile, kind: "idea-editor-v1", targetId: idea?.id ?? "new",
+    enabled: !recommendation,
+    fields: Object.fromEntries(Object.keys(emptyIdea).filter(key => key !== "goalIds").map(key => {
+      const field = value[key as keyof IdeaFields];
+      return [key, Array.isArray(field) ? field.join(", ") : String(field ?? "")];
+    })),
+    baseline: { revision: state.revision, ...(state.syncGeneration ? { syncGeneration: state.syncGeneration } : {}), ...(idea ? { version: idea.version } : {}), relations: { goalIds: value.goalIds ?? [] } } });
+  const formValue = !recommendation ? { ...value, ...draft.fields } : value;
   useEffect(() => {
+    const opener = document.activeElement;
     ref.current?.showModal();
     ref.current
       ?.querySelector<HTMLInputElement>('input[name="title"]')
       ?.focus();
-  }, []);
+    return () => {
+      const target = opener instanceof HTMLElement && opener.isConnected
+        ? opener : document.getElementById("forge-capture") ?? document.getElementById("workspace-main");
+      target?.focus({ preventScroll: true });
+    };
+  }, [draft.loading]);
+  useEffect(() => {
+    if (!draft.loading) ref.current?.querySelector<HTMLInputElement>('input[name="title"]')?.focus();
+  }, [draft.renderKey]);
+  if (!recommendation && draft.loading) return <p role="status">Restoring local idea draft…</p>;
   return (
     <dialog
       ref={ref}
@@ -680,8 +484,12 @@ export function IdeaEditor({
       aria-labelledby="idea-editor-heading"
     >
       <form
+        data-vorton-unsaved={!draft.pristine}
+        key={draft.renderKey}
+        onChange={!recommendation ? event => draft.update(rawDraftFields(event.currentTarget)) : undefined}
         onSubmit={async (e) => {
           e.preventDefault();
+          if (!recommendation && (!draft.canSubmit || draft.blockedUnknown)) return;
           const data = new FormData(e.currentTarget);
           const fields = { ...value };
           for (const key of Object.keys(value) as (keyof IdeaFields)[]) {
@@ -691,13 +499,18 @@ export function IdeaEditor({
           }
           fields.projects = split(data.get("projects"));
           fields.tags = split(data.get("tags"));
+          if (!recommendation) fields.goalIds = draft.baseline.relations?.goalIds ?? value.goalIds;
           const clean = Object.fromEntries(
             Object.keys(emptyIdea).map((k) => [
               k,
               fields[k as keyof IdeaFields],
             ]),
           ) as IdeaFields;
-          await save(clean);
+          if (recommendation) { await save(clean); return; }
+          const submitted = await draft.beginSubmit();
+          const result = await save(clean, { basedOnRevision: draft.baseline.revision ?? -1, syncGeneration: draft.baseline.syncGeneration, entityVersion: draft.baseline.version, localRecordId: draft.localRecordId }, draft.unknownRequestId,
+            requestId => draft.prepareAttempt(requestId, submitted));
+          if (result && await draft.finishSubmit(result, submitted)) close();
         }}
       >
         <div className="dialog-heading">
@@ -718,11 +531,12 @@ export function IdeaEditor({
           </button>
         </div>
         {error && <p role="alert">{error}</p>}
+        {!recommendation && <RetainedEditorDrafts draft={draft} profile={state.profile}/>}
         <label>
           Title
           <input
             name="title"
-            defaultValue={value.title}
+            defaultValue={String(formValue.title ?? "")}
             required
             maxLength={180}
           />
@@ -731,25 +545,27 @@ export function IdeaEditor({
           Description
           <textarea
             name="description"
-            defaultValue={value.description}
+            defaultValue={String(formValue.description ?? "")}
             maxLength={8000}
             rows={4}
           />
         </label>
-        <OrganizationInputs value={value} state={state} />
+        <OrganizationInputs value={recommendation ? value : {
+          projects: String(draft.fields.projects ?? ""), tags: String(draft.fields.tags ?? ""),
+        }} state={state} />
         <div className="form-grid">
           <label>
             Owner
             <input
               name="owner"
-              defaultValue={value.owner}
+              defaultValue={String(formValue.owner ?? "")}
               required
               maxLength={120}
             />
           </label>
           <label>
             Readiness
-            <select name="status" defaultValue={value.status}>
+            <select name="status" defaultValue={String(formValue.status ?? "inbox")}>
               {(value.status === "graduated"
                 ? ["graduated"]
                 : stages.filter((s) => s !== "graduated")
@@ -768,7 +584,7 @@ export function IdeaEditor({
               {label}
               <select
                 name={key}
-                defaultValue={String(value[key as keyof IdeaFields])}
+                defaultValue={String(formValue[key as keyof IdeaFields])}
               >
                 {bands.map((b) => (
                   <option key={b}>{b}</option>
@@ -781,7 +597,7 @@ export function IdeaEditor({
           Start when
           <textarea
             name="startCondition"
-            defaultValue={value.startCondition}
+            defaultValue={String(formValue.startCondition ?? "")}
             maxLength={4000}
             placeholder="What needs to become true before you begin?"
           />
@@ -790,19 +606,19 @@ export function IdeaEditor({
           Smallest useful test
           <textarea
             name="experiment"
-            defaultValue={value.experiment}
+            defaultValue={String(formValue.experiment ?? "")}
             maxLength={4000}
           />
         </label>
         <label>
           Review on
-          <input name="reviewOn" type="date" defaultValue={value.reviewOn} />
+          <input name="reviewOn" type="date" defaultValue={String(formValue.reviewOn ?? "")} />
         </label>
         <label>
           Evidence and value notes
           <textarea
             name="evidence"
-            defaultValue={value.evidence}
+            defaultValue={String(formValue.evidence ?? "")}
             maxLength={12000}
           />
         </label>
@@ -820,17 +636,19 @@ export function IdeaEditor({
           </details>
         )}
         <div className="actions">
-          <button className="primary" disabled={busy}>
+          <button className="primary" disabled={busy || (!recommendation && (!draft.canSubmit || draft.blockedUnknown))}>
             {recommendation ? "Accept edited idea" : "Save idea"}
           </button>
           <button type="button" disabled={busy} onClick={close}>
             Cancel
           </button>
         </div>
+        {!recommendation && <DraftStatus draft={draft} state={state} kind="idea" targetId={idea?.id ?? "new"} onDiscard={close} />}
       </form>
     </dialog>
   );
 }
+
 function GraduateIdea({
   state,
   idea,
@@ -849,7 +667,13 @@ function GraduateIdea({
   const ref = useRef<HTMLDialogElement>(null);
   const [existing, setExisting] = useState("");
   useEffect(() => {
+    const opener = document.activeElement;
     ref.current?.showModal();
+    return () => {
+      const target = opener instanceof HTMLElement && opener.isConnected
+        ? opener : document.getElementById("forge-capture") ?? document.getElementById("workspace-main");
+      target?.focus({ preventScroll: true });
+    };
   }, []);
   return (
     <dialog

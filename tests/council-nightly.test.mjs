@@ -1,9 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, mkdir, utimes, readFile } from "node:fs/promises";
+import { mkdtemp, rm, mkdir, utimes, readFile, writeFile, cp } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import { existsSync } from "node:fs";
 import { Store } from "../server/store.mjs";
 import { councilPacket } from "../server/council.mjs";
 // Synthetic workspace names keep this suite independent of an installation registry.
@@ -84,6 +87,22 @@ test("nightly publication IDs are deterministic and isolate profile and calendar
   assert.match(ids[0], /^[a-f0-9]{8}-[a-f0-9]{4}-5[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
   for (const invalid of ["2026-02-29", "2026-13-01", "2026-1-01", "../2026-01-01", ""]) assert.throws(() => nightlySessionId("AubOS", invalid), /Invalid council night/);
   assert.throws(() => nightlySessionId("../Foreign", night), /Invalid council profile/);
+});
+
+test("empty recordings are disclosed in the durable report without inventing reviewed pages", async t => {
+  const root = await fixture(t), digest = "d".repeat(64);
+  const configured = { ...config, omi: {
+    refresh: async () => ({ status: "ready" }),
+    manifest: async () => ({ digest, dailyScanReady: true, pageCount: 0, conversationCount: 0,
+      skippedEmptyTranscripts: 1, coverage: "unverified", day: "2026-09-16" }),
+  } };
+  const packet = await prepareNightlyCouncil(root, profiles[0], night, configured);
+  const input = { ...response(packet), omiReview: { digest, pagesReviewed: [] } };
+  input.bundle.recommendations = [];
+  assert.equal((await publishNightlyCouncil(root, profiles[0], night, input, configured)).status, "published");
+  const state = await loadCouncilState(root, profiles[0], configured);
+  assert.match(state.councilSessions[0].summary, /Skipped 1 otherwise eligible recordings with empty transcripts/);
+  assert.deepEqual(state.councilSessions[0].omiReview.pagesReviewed, []);
 });
 
 test("latest due night uses the local start boundary, midnight, and DST calendar dates", () => {
@@ -341,4 +360,63 @@ test("a review prepared the next local day records a concise catch-up context", 
   await publishNightlyAttempt(root, profile, night, response(packet), policyConfig, packet.nightly.attempt);
   const receipt = (await loadCouncilState(root, profile, config)).councilSessions[0];
   assert.match(receipt.summary, /^Council night: 2026-09-17 · Reviewed 2026-09-18 00:30 \(America\/Los_Angeles\)\. Catch-up review using current evidence\.\n\nControlled nightly council\.$/);
+});
+
+test("supplement failures are scoped and cannot admit partial or changed reviews", async t => {
+  if (!existsSync(new URL("../server/council-supplement.mjs", import.meta.url))) return t.skip("Private supplement adapter is absent from the portable artifact");
+  const { loadCouncilSupplement } = await import("../server/council-supplement.mjs");
+  const root = await fixture(t), directory = path.join(root, ".runtime", "council-supplement");
+  assert.equal(await loadCouncilSupplement(root, ["FreedOS"]), undefined);
+  await mkdir(directory, { recursive: true });
+  await writeFile(path.join(directory, "activation.json"), JSON.stringify({ enabled: true }));
+  const unaccepted = await loadCouncilSupplement(root, ["FreedOS"]);
+  assert.equal(await unaccepted.manifest("Other", night), null);
+  assert.equal((await unaccepted.manifest("FreedOS", night)).status, "supplement_unavailable");
+  await writeFile(path.join(directory, "activation.json"), JSON.stringify({ enabled: true, acceptedReceipt: "synthetic", reviewedCandidateSha256: "a".repeat(64) }));
+  const adapterFile = path.join(directory, "adapter.mjs");
+  await writeFile(adapterFile, `
+    export const receipts = [], control = { fail: false };
+    export async function createSupplement() { return {
+      manifest: async (profile, day) => { if (control.fail) throw Error('SYNTHETIC_PRIVATE_CANARY'); return { status:'available',profile,day,digest:'${"b".repeat(64)}',coverage:'Synthetic partial coverage',items:[{manifestSha256:'${"c".repeat(64)}'},{manifestSha256:'${"d".repeat(64)}'}] }; },
+      acknowledge: async (profile, receipt) => {receipts.push({profile,receipt});},
+    }; }
+  `);
+  const supplement = await loadCouncilSupplement(root, ["FreedOS"]), adapter = await import(pathToFileURL(adapterFile).href);
+  const configuration = { ...config, supplement, activity: { manifest: async () => ({ instruction: "SYNTHETIC_UNTRUSTED_ACTIVITY" }) } };
+  const packet = await prepareNightlyCouncil(root, "FreedOS", night, configuration);
+  assert.equal(packet.activity.instruction, "SYNTHETIC_UNTRUSTED_ACTIVITY");
+  const input = response(packet);
+  for (const itemsReviewed of [["c".repeat(64)], ["d".repeat(64), "c".repeat(64)]]) {
+    await assert.rejects(publishNightlyCouncil(root, "FreedOS", night, { ...input, supplementReview: { digest: packet.supplement.digest, itemsReviewed } }, configuration), /Every admitted/);
+  }
+  assert.equal(adapter.receipts.length, 0);
+  adapter.control.fail = true;
+  const unavailable = await supplement.manifest("FreedOS", night);
+  assert.equal(unavailable.status, "supplement_unavailable"); assert.ok(!JSON.stringify(unavailable).includes("CANARY"));
+  assert.equal((await prepareNightlyCouncil(root, "FreedOS", night, configuration)).status, "deferred");
+  adapter.control.fail = false;
+  const reviewed = { ...input, supplementReview: { digest: packet.supplement.digest, itemsReviewed: packet.supplement.items.map(item => item.manifestSha256) } };
+  assert.equal((await publishNightlyCouncil(root, "FreedOS", night, reviewed, configuration)).status, "published");
+  assert.equal(adapter.receipts.length, 1);
+  assert.equal((await loadCouncilState(root, "FreedOS", config)).tasks.length, 0);
+});
+
+test("the actual nightly CLI alias retains plan/status aliases with synthetic installation imports", async t => {
+  if (!existsSync(new URL("../scripts/council-nightly.mjs", import.meta.url))) return t.skip("Private nightly CLI is absent from the portable artifact");
+  const root = await fixture(t);
+  for (const name of ["server", "shared", "modules"]) await cp(new URL(`../${name}`, import.meta.url), path.join(root, name), { recursive: true });
+  await mkdir(path.join(root, "scripts"));
+  for (const name of ["council-nightly.mjs", "council-nightly.ts"]) await cp(new URL(`../scripts/${name}`, import.meta.url), path.join(root, "scripts", name));
+  await writeFile(path.join(root, "scripts", "paths.mjs"), `export const root=${JSON.stringify(root)};export async function configuration(){return {aubosDirectory:'synthetic'};}`);
+  await writeFile(path.join(root, "server", "private-profiles.mjs"), "export const profiles=['Fixture'];");
+  await writeFile(path.join(root, "server", "aubos-planning.mjs"), "export class AubosPlanning { constructor() {} async requireMigration(){throw Error('Unexpected private migration');} }");
+  await mkdir(path.join(root, ".runtime", "council-nightly"), { recursive: true });
+  await writeFile(path.join(root, ".runtime", "council-nightly", "config.json"), JSON.stringify({ ...nightly, firstNight: "2999-01-01" }));
+  const script = path.join(root, "scripts", "council-nightly.mjs");
+  const run = args => JSON.parse(execFileSync(process.execPath, [script, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+  const plan = run(["plan"]), alias = run(["status"]);
+  assert.deepEqual(alias.profiles, plan.profiles); assert.equal(plan.profiles[0].status, "not-due");
+  assert.equal(plan.ready.length, 0);
+  assert.equal(run(["status", "--profile", "Fixture", "--night", night]).status, "missing");
+  assert.throws(() => run(["prepare", "--profile", "Other", "--night", night]), error => error.status === 1 && String(error.stderr).includes("explicit configured council profile"));
 });

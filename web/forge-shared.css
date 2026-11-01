@@ -1,0 +1,70 @@
+/* Shared Forge view styling. Provenance: adapted from docs/mockups/forge/base.css,
+   with the mockup palette mapped onto the shared theme tokens in web/design/themes.css. */
+.forge {
+  --forge-suggest: var(--aub-text-mid);
+  --forge-suggest-soft: color-mix(in srgb, var(--aub-text) 3%, transparent);
+  --forge-suggest-line: color-mix(in srgb, var(--aub-text) 18%, transparent);
+  --forge-ring-track: color-mix(in srgb, var(--aub-text) 12%, transparent);
+  --forge-raised: var(--aub-card-solid);
+  --forge-shadow: 0 1px 2px rgb(0 0 30 / 0.06), 0 6px 20px rgb(0 0 40 / 0.07);
+  --forge-shadow-lift: 0 2px 6px rgb(0 0 30 / 0.08), 0 18px 44px rgb(0 0 40 / 0.14);
+}
+.forge-ring { flex: none; color: var(--aub-accent); }
+.forge-avatar {
+  display: inline-grid; flex: none; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: color-mix(in srgb, hsl(var(--hue) 55% 55%) 22%, var(--aub-card-solid));
+  color: color-mix(in srgb, hsl(var(--hue) 60% 40%) 80%, var(--aub-text));
+  font-size: .66rem; font-weight: 700; letter-spacing: .02em;
+}
+.forge-avatar.xs { width: 18px; height: 18px; font-size: .52rem; }
+.forge-avatar.sm { width: 22px; height: 22px; font-size: .6rem; }
+.forge-avatar.lg { width: 34px; height: 34px; font-size: .78rem; }
+.forge-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px;
+  background: var(--aub-card-header); color: var(--aub-text-mid); font-size: .74rem; font-weight: 600; white-space: nowrap;
+}
+.forge-chip.overdue { background: var(--aub-red-soft); color: var(--aub-red); }
+.forge-chip.soon { background: var(--aub-amber-soft); color: var(--aub-amber); }
+.forge-prio { font-weight: 800; font-size: .8rem; letter-spacing: -.05em; }
+.forge-prio.high { color: var(--aub-red); }
+.forge-prio.medium { color: var(--aub-amber); }
+.forge .is-suggested {
+  border: 1px solid var(--forge-suggest-line) !important; background: var(--forge-suggest-soft) !important; box-shadow: none !important;
+}
+.forge-unconfirmed {
+  display: inline-flex; align-items: center; gap: 5px; color: var(--forge-suggest);
+  font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+}
+.forge-unconfirmed::before { content: "◇"; font-size: .8rem; }
+.forge-provenance { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--aub-text-mid); font-size: .78rem; }
+.forge-prov-who { display: inline-flex; align-items: center; gap: 5px; }
+.forge-prov-who b { color: var(--forge-suggest); }
+.forge-confidence { padding: 0 7px; border-radius: 999px; background: var(--aub-card-header); font-size: .7rem; font-weight: 700; }
+.forge-confidence.conf-high { background: var(--aub-green-soft); color: var(--aub-green); }
+.forge-confidence.conf-medium { background: var(--aub-amber-soft); color: var(--aub-amber); }
+.forge-confidence.conf-low { background: var(--aub-red-soft); color: var(--aub-red); }
+.forge-provenance.long { display: grid; justify-items: start; gap: 6px; }
+.forge-why { margin: 0; color: var(--aub-text-mid); font-size: .84rem; line-height: 1.45; }
+.forge-why b { color: var(--aub-text); }
+.forge-suggest-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.vorton-workspace .forge-suggest-actions button { padding: 5px 11px; font-size: .8rem; }
+.vorton-workspace .forge-suggest-actions.compact button { padding: 3px 9px; font-size: .76rem; }
+/* Suggestions are a review state, not another accent palette. */
+.forge .is-suggested .forge-avatar, .forge .forge-provenance .forge-avatar,
+.forge .forge-confidence { background: var(--forge-suggest-soft); color: var(--aub-text-mid); }
+.vorton-workspace .forge-suggest-actions .forge-confirm { border-color: var(--forge-suggest-line); background: var(--aub-text); color: var(--aub-card-solid); }
+.vorton-workspace .forge-suggest-actions .forge-ghost { border-color: transparent; background: transparent; color: var(--aub-text-dim); }
+.forge-snoozed { color: var(--aub-text-dim); font-size: .78rem; }
+.forge-empty { display: grid; justify-items: center; gap: 6px; padding: 28px 16px; color: var(--aub-text-dim); text-align: center; }
+.forge-empty b { color: var(--aub-text-mid); font-family: var(--aub-font-display); font-weight: 500; font-size: 1.05rem; }
+.vorton-workspace .forge-rail-link, .forge-rail-link {
+  display: flex; align-items: center; gap: 9px; width: 100%; min-height: 36px; padding: 6px 10px;
+  border: 0; border-left: 2px solid transparent; border-radius: 0 var(--aub-control-radius) var(--aub-control-radius) 0;
+  background: none; color: var(--aub-text-mid); font-family: var(--aub-font-display); font-size: .95rem; text-align: left; cursor: pointer;
+}
+.vorton-workspace .forge-rail-link:hover, .forge-rail-link:hover { color: var(--aub-text); background: var(--aub-control-hover); }
+.vorton-workspace .forge-rail-link[aria-current="true"], .forge-rail-link[aria-current="true"] { color: var(--aub-accent); background: var(--aub-accent-soft); border-left-color: var(--aub-accent); }
+.forge-rail-link > span:first-of-type { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.forge-rail-link .count { margin-left: auto; color: var(--aub-text-dim); font-family: var(--aub-font-body, inherit); font-size: .76rem; }
+.forge-rail-link .count.suggest { padding: 0 6px; border-radius: 9px; background: var(--forge-suggest); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .forge * { transition: none !important; animation: none !important; } }

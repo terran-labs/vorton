@@ -1,6 +1,7 @@
 "use client";
 import type { FocusEventHandler, MouseEventHandler } from "react";
 import type { AppearanceDefinition as ThemeDefinition } from "./theme-registry";
+import { Tooltip } from "./Tooltip";
 
 interface ThemePreviewButtonProps {
   theme: ThemeDefinition;
@@ -10,6 +11,8 @@ interface ThemePreviewButtonProps {
   onMouseLeave?: MouseEventHandler<HTMLButtonElement>;
   onFocus?: FocusEventHandler<HTMLButtonElement>;
   onBlur?: FocusEventHandler<HTMLButtonElement>;
+  onPreviewEnd?: () => void;
+  onPreviewStart?: () => void;
   variant?: "full" | "compact";
   className?: string;
 }
@@ -22,11 +25,14 @@ export function ThemePreviewButton({
   onMouseLeave,
   onFocus,
   onBlur,
+  onPreviewEnd,
+  onPreviewStart,
   variant = "full",
   className = "",
 }: ThemePreviewButtonProps) {
   if (variant === "compact") {
     return (
+      <Tooltip label={theme.name} description={`${theme.tagline} ${theme.description}`} className="theme-preview-tooltip" onDismiss={onPreviewEnd} onOpen={onPreviewStart}>
       <button
         type="button"
         onClick={onClick}
@@ -51,6 +57,7 @@ export function ThemePreviewButton({
           <span className="theme-preview-button-sheen" />
         </span>
       </button>
+      </Tooltip>
     );
   }
 
@@ -58,6 +65,10 @@ export function ThemePreviewButton({
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onFocus={onFocus}
+      onBlur={onBlur}
       aria-pressed={active}
       className={`rounded-2xl border p-3 text-left transition-all ${
         active

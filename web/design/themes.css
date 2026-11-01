@@ -33,7 +33,7 @@
   --aub-chart-series-7: #df6037;
   --aub-logo-background: #16163a;
   --aub-logo-text: #f0f0fa;
-  --aub-header-background: rgb(240 240 248 / 0.58);
+  --aub-header-background: rgb(240 240 248);
   --aub-selection: rgb(41 151 255 / 0.18);
   --aub-focus-ring: rgb(41 151 255 / 0.38);
   --aub-card-shadow-base:
@@ -104,7 +104,7 @@
   --aub-chart-series-7: #d97a59;
   --aub-logo-background: #f2f2f7;
   --aub-logo-text: #1c1c1e;
-  --aub-header-background: rgb(34 34 34 / 0.82);
+  --aub-header-background: rgb(34 34 34);
   --aub-selection: rgb(41 151 255 / 0.32);
   --aub-focus-ring: #64d2ff;
   --aub-card-shadow-base:
@@ -261,7 +261,7 @@
   --theme-status-active-progress: rgb(113 113 122 / 0.9);
   --theme-card-top-glint: rgb(255 255 255 / 0.022);
   --theme-card-top-glint-hover: rgb(255 255 255 / 0.03);
-  --theme-header-background: rgb(10 10 10 / 0.7);
+  --theme-header-background: rgb(10 10 10);
   --theme-attached-topbar-background: #0a0a0a;
   --theme-header-border: rgb(255 255 255 / 0.08);
   --theme-header-shadow: 0 4px 30px rgb(0 0 0 / 0.5);
@@ -507,7 +507,7 @@
   );
   --theme-card-top-glint: rgb(255 255 255 / 0.04);
   --theme-card-top-glint-hover: rgb(255 255 255 / 0.05);
-  --theme-header-background: rgb(55 45 36 / 0.98);
+  --theme-header-background: rgb(55 45 36);
   --theme-attached-topbar-background: #2b231d;
   --theme-header-border: rgb(188 157 108 / 0.24);
   --theme-header-shadow: 0 8px 22px rgb(18 12 9 / 0.18);
@@ -620,7 +620,7 @@
   );
   --theme-card-top-glint: rgb(255 255 255 / 0.04);
   --theme-card-top-glint-hover: rgb(255 255 255 / 0.05);
-  --theme-header-background: rgb(24 15 13 / 0.72);
+  --theme-header-background: rgb(24 15 13);
   --theme-attached-topbar-background: #1c130f;
   --theme-header-border: rgb(193 90 46 / 0.22);
   --theme-header-shadow: 0 4px 30px rgb(0 0 0 / 0.42);
@@ -744,7 +744,7 @@
   );
   --theme-card-top-glint: rgb(255 255 255 / 0.04);
   --theme-card-top-glint-hover: rgb(255 255 255 / 0.05);
-  --theme-header-background: rgb(249 241 226 / 0.985);
+  --theme-header-background: rgb(249 241 226);
   --theme-attached-topbar-background: #f9f1e2;
   --theme-header-border: rgb(132 100 68 / 0.12);
   --theme-header-shadow: 0 4px 10px rgb(84 58 35 / 0.035);

@@ -61,7 +61,7 @@ test("full council imports multiple role proposals atomically without accepting 
     ),
     /role/,
   );
-  assert.deepEqual(await store.read("FreedOS"), result);
+  assert.deepEqual(await store.read("FreedOS", { includeSyncCursor: true }), result);
 });
 test("manual review packets bind installation and evidence revision", async () => {
   const store = new Store(

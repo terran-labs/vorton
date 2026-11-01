@@ -1,0 +1,265 @@
+/* Forge Ideas: Focus Lists notebook plus the Outcome Studio value against effort
+   chart. Provenance: docs/mockups/forge/focus.css (ideas, maturity, bands, rail)
+   and studio.css (matrix, bubbles, legend, needs assessment), mapped onto the
+   --aub-* theme tokens. Stage colors were checked with the dataviz palette
+   validator: inbox, exploring and ready pass colorblind separation; parked and
+   closed stages and unconfirmed suggestions use neutral ink. */
+.fi, .fi-rail {
+  --fi-sheet: var(--forge-raised, var(--aub-card-solid));
+  --fi-track: color-mix(in srgb, var(--aub-text) 13%, transparent);
+  --fi-plot: color-mix(in srgb, var(--aub-text) 3%, var(--aub-card-solid));
+  --fi-ease: cubic-bezier(.2, .8, .2, 1);
+}
+.fi .st-inbox, .fi-rail .st-inbox { --st: var(--aub-chart-series-1); }
+.fi .st-exploring, .fi-rail .st-exploring { --st: var(--aub-chart-series-6); }
+.fi .st-ready, .fi-rail .st-ready { --st: var(--aub-chart-series-4); }
+.fi .st-parked, .fi-rail .st-parked { --st: var(--aub-text-dim); }
+.fi .st-graduated, .fi-rail .st-history { --st: var(--aub-chart-series-5); }
+.fi .st-archived { --st: color-mix(in srgb, var(--aub-text-dim) 60%, transparent); }
+.fi .st-suggested, .fi .sugg, .fi-rail .st-suggested { --st: var(--forge-suggest, var(--aub-chart-series-3)); }
+.fi-rail .st-all { --st: var(--aub-accent); }
+
+/* ------------------------------------------------------------ rail */
+.fi-rail { display: grid; gap: 2px; min-width: 0; margin-bottom: 26px; }
+/* The workspace's generic nav rule is a centered toolbar; this rail is a list. */
+.vorton-workspace nav.fi-rail { display: grid; align-items: stretch; justify-content: normal; gap: 2px; height: auto; overflow: visible; }
+.forge-rail > .fi-rail + p { margin-top: 0; }
+.fi-rail-caption { margin: 0 0 9px; color: var(--aub-text-mid); font-size: .69rem; letter-spacing: .13em; text-transform: uppercase; }
+.fi-rail-links { display: grid; gap: 2px; min-width: 0; }
+/* The workspace button reset outranks the shared rail link; restore it here. */
+.vorton-workspace .fi-rail .forge-rail-link {
+  gap: 9px; padding: 6px 10px; border: 0; border-left: 2px solid transparent;
+  border-radius: 0 var(--aub-control-radius) var(--aub-control-radius) 0; font-weight: 400;
+}
+.vorton-workspace .fi-rail .forge-rail-link[aria-current="true"] { border-left-color: var(--aub-accent); background: var(--aub-accent-soft); }
+.fi-rl-mark { flex: none; width: 8px; height: 8px; border: 2px solid var(--st); border-radius: 50%; background: color-mix(in srgb, var(--st) 30%, transparent); }
+.fi-rl.st-suggested .fi-rl-mark { border-style: solid; background: none; }
+.fi-rl .count { font-variant-numeric: tabular-nums; }
+.fi-rl .count.suggest { font-weight: 700; line-height: 18px; }
+@media (max-width: 1180px) {
+  .fi-rail, .vorton-workspace nav.fi-rail { margin-bottom: 12px; }
+  .fi-rail-caption { display: none; }
+  .fi-rail-links { display: flex; max-width: 100%; gap: 6px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+  .vorton-workspace .fi-rail .forge-rail-link {
+    flex: none; width: auto; min-height: 34px; padding: 5px 12px; border: 1px solid var(--aub-border); border-radius: 999px;
+    background: var(--aub-card-solid); font-size: .9rem;
+  }
+  .vorton-workspace .fi-rail .forge-rail-link[aria-current="true"] { border-color: var(--aub-accent); }
+  .fi-rail .forge-rail-link > span:first-of-type { overflow: visible; }
+}
+
+/* ------------------------------------------------------------ page */
+.fi { display: grid; gap: 18px; min-width: 0; }
+.fi > * { min-width: 0; }
+.fi .vorton-page-heading { margin: 0; }
+.fi-counts { color: var(--aub-text-dim); white-space: normal; }
+.fi-dim { color: var(--aub-text-dim); }
+.fi h2, .fi h3 { margin: 0; }
+
+/* The shared capture form, styled as the Focus notebook's ruled sheet. */
+.fi-capture .forge-capture {
+  gap: 4px; padding: 14px 16px 12px; border-radius: 18px; background: var(--fi-sheet); box-shadow: var(--forge-shadow);
+}
+.fi-capture .forge-capture > label { color: var(--aub-text-dim); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.vorton-workspace .fi-capture .forge-capture input {
+  padding: 4px 0; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--aub-accent) 22%, transparent); border-radius: 0; background: transparent; outline: none;
+  font-family: var(--aub-font-display); font-size: 1.4rem; font-weight: 300; line-height: 32px;
+}
+.vorton-workspace .fi-capture .forge-capture input:focus-visible { border-bottom-color: var(--aub-accent); box-shadow: 0 1px 0 var(--aub-accent); }
+.fi-capture .forge-capture > div { align-items: center; }
+
+/* ------------------------------------------------------------ chart */
+.fi-chart { padding: 14px 16px 14px; border: 1px solid var(--aub-border); border-radius: 16px; background: var(--fi-sheet); box-shadow: var(--forge-shadow); }
+.fi-chart-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; font-size: .78rem; }
+.vorton-workspace .fi-chart-head h2 { font-size: 1.15rem; font-weight: 500; letter-spacing: -.01em; }
+.fi-chart-body { display: grid; grid-template-columns: minmax(0, 1fr) 248px; gap: 16px; align-items: stretch; }
+.fi-chart-empty { display: grid; justify-items: start; gap: 10px; }
+.fi-chart-empty h2, .fi-chart-empty p { margin: 0; }
+.fi-chart-empty p { color: var(--aub-text-mid); font-size: .9rem; }
+.fi-frame { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 6px; min-width: 0; }
+.fi-axis-y { display: grid; place-items: center; color: var(--aub-text-dim); font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); }
+.fi-axis-x { display: flex; grid-column: 2; justify-content: space-between; color: var(--aub-text-dim); font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.fi-axis-x span:first-child, .fi-axis-x span:last-child { font-weight: 500; letter-spacing: .03em; text-transform: none; }
+.fi-matrix { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 12px; background: var(--fi-plot); }
+.fi-quad { position: absolute; display: grid; align-content: start; gap: 1px; width: 50%; height: 50%; padding: 9px 12px; pointer-events: none; }
+.fi-quad b { font-family: var(--aub-font-display); font-size: .98rem; font-weight: 500; line-height: 1.1; }
+.fi-quad span { color: var(--aub-text-dim); font-size: .7rem; }
+.fi-quad.q-tl { top: 0; left: 0; background: color-mix(in srgb, var(--aub-green) 7%, transparent); }
+.fi-quad.q-tl b { color: var(--aub-green); }
+.fi-quad.q-tr { top: 0; right: 0; text-align: right; background: color-mix(in srgb, var(--aub-accent) 6%, transparent); }
+.fi-quad.q-tr b { color: var(--aub-text); }
+.fi-quad.q-bl { bottom: 0; left: 0; align-content: end; }
+.fi-quad.q-bl b { color: var(--aub-text-mid); }
+.fi-quad.q-br { right: 0; bottom: 0; align-content: end; text-align: right; background: color-mix(in srgb, var(--aub-red) 5%, transparent); }
+.fi-quad.q-br b { color: var(--aub-red); }
+.fi-mid-x, .fi-mid-y { position: absolute; border: 0 dashed var(--aub-border); pointer-events: none; }
+.fi-mid-x { left: 0; right: 0; top: 50%; border-top-width: 1px; }
+.fi-mid-y { top: 0; bottom: 0; left: 50%; border-left-width: 1px; }
+.vorton-workspace .fi-bubble {
+  position: absolute; z-index: 2; display: grid; place-items: center; padding: 0;
+  border: 2px solid var(--st); border-radius: 50%; background: color-mix(in srgb, var(--st) 30%, var(--fi-plot));
+  box-shadow: 0 0 0 2px var(--fi-plot); color: var(--aub-text); font-size: .74rem; font-weight: 800; line-height: 1;
+  transform: translate(-50%, -50%); transition: background-color .14s, box-shadow .14s;
+}
+.vorton-workspace .fi-bubble:hover { z-index: 4; background: color-mix(in srgb, var(--st) 40%, var(--fi-plot)); }
+.vorton-workspace .fi-bubble:focus-visible { z-index: 4; outline: 3px solid var(--aub-accent); outline-offset: 2px; }
+.vorton-workspace .fi-bubble.sel { z-index: 3; box-shadow: 0 0 0 2px var(--fi-plot), 0 0 0 5px color-mix(in srgb, var(--st) 45%, transparent), var(--forge-shadow); }
+.vorton-workspace .fi-bubble.sugg { border-style: solid; background: color-mix(in srgb, var(--st) 7%, var(--fi-plot)); color: var(--st); }
+.fi-label {
+  position: absolute; z-index: 5; display: -webkit-box; overflow: hidden; padding: 2px 8px; border-radius: 6px;
+  -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  background: var(--aub-card-solid); box-shadow: 0 1px 3px rgb(0 0 30 / .14); color: var(--aub-text);
+  font-size: 12px; font-weight: 600; line-height: 16px; pointer-events: none; white-space: normal;
+}
+.fi-label.sel { box-shadow: 0 0 0 1px var(--aub-border), 0 2px 8px rgb(0 0 30 / .16); }
+.fi-label.sugg { color: var(--forge-suggest); font-style: italic; }
+.fi-matrix-empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--aub-text-dim); font-size: .86rem; }
+
+.fi-rank { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.vorton-workspace .fi-rank h3 { font-size: .98rem; font-weight: 500; }
+.fi-rank > p { margin: 2px 0 8px; font-size: .74rem; line-height: 1.35; }
+.fi-rank ol { flex: 1 1 0; display: grid; align-content: start; gap: 2px; min-height: 0; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.vorton-workspace .fi-rank-row {
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%;
+  padding: 5px 8px 5px 4px; border: 0; border-radius: 8px; background: none; font-size: .84rem; font-weight: 500; text-align: left;
+}
+.vorton-workspace .fi-rank-row.sel { background: var(--aub-accent-soft); }
+.fi-rank-no {
+  display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--st); border-radius: 50%;
+  background: color-mix(in srgb, var(--st) 30%, transparent); font-size: .7rem; font-weight: 800;
+}
+.fi-rank-row.sugg .fi-rank-no { border-style: solid; background: none; color: var(--st); }
+.fi-rank-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fi-rank-row.sugg .fi-rank-title { color: var(--forge-suggest); font-style: italic; }
+.fi-rank-score { color: var(--aub-text-dim); font-size: .74rem; font-variant-numeric: tabular-nums; }
+.vorton-workspace .fi-rank-more { display: none; align-self: start; margin-top: 6px; padding: 4px 10px; font-size: .8rem; }
+
+.fi-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 10px; color: var(--aub-text-mid); font-size: .76rem; }
+.fi-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.fi-legend-item i { width: 10px; height: 10px; border: 2px solid var(--st); border-radius: 50%; background: color-mix(in srgb, var(--st) 30%, transparent); }
+.fi-legend-item.sugg i { border-style: solid; background: none; }
+.fi-legend-item.size { --st: var(--aub-text-dim); gap: 4px; margin-left: auto; }
+.fi-legend-item.size i { width: 8px; height: 8px; border-width: 1.5px; }
+.fi-legend-item.size i.big { width: 15px; height: 15px; margin-right: 2px; }
+.fi-assess-strip { display: grid; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--aub-divider); font-size: .78rem; }
+.fi-assess-strip > b { font-size: .82rem; }
+.fi-assess-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.vorton-workspace .fi-assess-chip {
+  display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 4px 11px 4px 7px; border-radius: 999px;
+  background: var(--fi-plot); font-size: .8rem; font-weight: 600; text-align: left;
+}
+.fi-assess-chip i { flex: none; width: 12px; height: 12px; border: 2px dashed var(--st); border-radius: 50%; }
+.vorton-workspace .fi-assess-chip.sugg { border-style: solid; border-color: var(--forge-suggest-line); color: var(--forge-suggest); }
+.vorton-workspace .fi-assess-chip.sel { border-color: var(--aub-accent); box-shadow: 0 0 0 3px var(--aub-accent-soft); }
+
+/* ------------------------------------------------------------ notebook */
+.fi-notebook { display: grid; gap: 28px; min-width: 0; margin-top: 8px; }
+.fi-sec { min-width: 0; }
+.vorton-workspace .fi-sec-head {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 10px; padding: 0 6px;
+  font-family: var(--aub-font-display); font-size: 1.22rem; font-weight: 500; letter-spacing: 0;
+}
+.fi-sec-mark { flex: none; width: 10px; height: 10px; border: 2px solid var(--st); border-radius: 50%; background: color-mix(in srgb, var(--st) 30%, transparent); }
+.vorton-workspace .fi-sec.st-suggested .fi-sec-head { color: var(--forge-suggest); }
+.fi-sec.st-suggested .fi-sec-mark { border-style: solid; background: none; }
+.fi-sec-count { color: var(--aub-text-dim); font-family: var(--aub-font-body, inherit); font-size: .8rem; font-weight: 600; }
+.fi-sec-sub { margin-left: auto; color: var(--aub-text-dim); font-family: var(--aub-font-body, inherit); font-size: .78rem; font-weight: 400; text-align: right; }
+.fi-snoozed { margin: -4px 0 8px 6px; color: var(--aub-text-dim); font-size: .8rem; }
+.fi-ideas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 14px; }
+
+.fi-idea {
+  display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 16px 18px 14px;
+  border: 1.5px solid transparent; border-radius: 18px; background: var(--fi-sheet); box-shadow: var(--forge-shadow);
+  scroll-margin: 96px 0 24px; transition: border-color .16s;
+}
+.fi-idea.is-selected { border-color: var(--aub-accent); }
+.fi-idea.is-focused { animation: fi-focus 1.6s var(--fi-ease); }
+.fi-idea.is-suggested { gap: 9px; }
+.fi-idea.is-suggested.is-selected { border-color: var(--forge-suggest) !important; border-style: solid !important; }
+.fi-idea.is-suggested:focus-visible { outline: 3px solid var(--forge-suggest); outline-offset: 2px; }
+@keyframes fi-focus { 0%, 40% { box-shadow: 0 0 0 6px var(--aub-accent-soft), var(--forge-shadow-lift); } 100% { box-shadow: var(--forge-shadow); } }
+.fi-idea-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.fi-idea-area { min-width: 0; margin-left: auto; overflow: hidden; color: var(--aub-text-dim); font-size: .74rem; text-overflow: ellipsis; white-space: nowrap; }
+.vorton-workspace .fi-idea h3 { margin: 0; font-size: 1.3rem; font-weight: 400; line-height: 1.14; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.vorton-workspace .fi-title { display: inline; padding: 0; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; text-align: left; }
+.vorton-workspace .fi-title:hover { background: none; color: var(--aub-accent); }
+.fi-desc { display: -webkit-box; margin: 0; overflow: hidden; color: var(--aub-text-mid); font-size: .88rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.fi-desc.is-open { display: block; }
+.fi-changes { display: grid; gap: 3px; margin: 0; padding: 8px 10px 8px 26px; border-radius: 10px; background: var(--forge-suggest-soft); color: var(--aub-text-mid); font-size: .82rem; }
+.fi-test { display: flex; gap: 7px; margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--fi-plot); color: var(--aub-text-mid); font-size: .82rem; line-height: 1.4; }
+.fi-test b { color: var(--aub-text); font-weight: 600; }
+.fi-icon { flex: none; margin-top: 2px; color: var(--aub-chart-series-4); }
+.fi-test.is-missing { border: 1px dashed var(--aub-border); background: transparent; color: var(--aub-text-dim); font-style: italic; }
+.fi-bandrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: auto; }
+.fi-bandrow .fi-review { margin-left: auto; font-size: .74rem; }
+.fi-conf { flex-basis: 100%; font-size: .74rem; }
+.fi-band { display: inline-flex; align-items: center; gap: 6px; }
+.fi-band small { color: var(--aub-text-dim); font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.fi-bars { display: inline-flex; gap: 2px; }
+.fi-bars i { width: 9px; height: 6px; border-radius: 2px; background: var(--fi-track); }
+.b-value .lv-1 i:nth-child(-n+1), .b-value .lv-2 i:nth-child(-n+2), .b-value .lv-3 i { background: var(--aub-green); }
+.b-effort .lv-1 i:nth-child(-n+1), .b-effort .lv-2 i:nth-child(-n+2), .b-effort .lv-3 i { background: var(--aub-chart-series-6); }
+.fi-bars.lv-0 i { border: 1px dashed var(--aub-border); background: transparent; }
+.fi-maturity { display: inline-flex; flex: none; align-items: center; gap: 3px; color: var(--aub-text-dim); font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.fi-maturity i { width: 7px; height: 7px; border-radius: 50%; background: var(--fi-track); }
+.fi-maturity i.on { background: var(--aub-chart-series-6); }
+.fi-maturity.m-ready i.on { background: var(--aub-green); }
+.fi-maturity.m-parked i, .fi-maturity.m-archived i { border: 1.5px solid var(--aub-text-dim); background: transparent; }
+.fi-maturity > span { margin-left: 4px; }
+.fi-origin { align-self: flex-start; font-size: .8rem; font-weight: 600; }
+.fi-origin span { color: var(--forge-suggest); }
+.fi-detail { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--aub-divider); color: var(--aub-text-mid); font-size: .84rem; line-height: 1.45; }
+.fi-detail p { margin: 0; }
+.fi-detail b { color: var(--aub-text); font-weight: 600; }
+.fi-assess { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; margin: 0; }
+.fi-assess div { display: flex; justify-content: space-between; gap: 8px; }
+.fi-assess dt { color: var(--aub-text-dim); font-size: .74rem; }
+.fi-assess dd { margin: 0; color: var(--aub-text); font-size: .78rem; font-weight: 600; text-transform: capitalize; }
+.fi-hint { color: var(--aub-text-dim); font-style: italic; }
+.fi-links { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.vorton-workspace .fi-inline { justify-self: start; padding: 4px 10px; font-size: .8rem; }
+.fi-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
+.vorton-workspace .fi-actions button { padding: 5px 11px; font-size: .8rem; }
+.vorton-workspace .fi-actions .fi-ghost { border-color: transparent; color: var(--aub-text-mid); }
+.vorton-workspace .fi-actions .fi-ghost:hover { color: var(--aub-text); }
+
+.fi-history { display: grid; gap: 0; margin: 0; padding: 4px 0; border-radius: 16px; background: var(--fi-sheet); box-shadow: var(--forge-shadow); list-style: none; }
+.fi-hrow { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 16px; border-left: 2px solid transparent; scroll-margin: 96px 0 24px; }
+.fi-hrow + .fi-hrow { border-top: 1px solid var(--aub-divider); }
+.fi-hrow.is-selected { border-left-color: var(--aub-accent); background: var(--aub-accent-soft); }
+.fi-hrow.is-focused { animation: fi-focus 1.6s var(--fi-ease); }
+.fi-hstage { justify-self: start; padding: 1px 8px; border: 1.5px solid var(--st); border-radius: 999px; color: var(--aub-text-mid); font-size: .72rem; font-weight: 700; }
+.fi-htitle { display: grid; gap: 2px; min-width: 0; }
+.fi-htitle b { font-weight: 600; overflow-wrap: anywhere; outline: none; }
+.fi-htitle small { color: var(--aub-text-dim); font-size: .76rem; }
+.fi-hrow .fi-actions { padding: 0; }
+.fi .forge-empty { border-radius: 16px; background: var(--fi-sheet); }
+.vorton-workspace .fi .forge-empty button { margin-top: 6px; padding: 5px 12px; font-size: .84rem; }
+
+/* ------------------------------------------------------------ responsive */
+@media (max-width: 900px) {
+  .fi-chart-body { grid-template-columns: minmax(0, 1fr); }
+  .fi-rank ol { flex: none; overflow: visible; }
+  .fi-rank.is-collapsed li:nth-child(n + 6) { display: none; }
+  .vorton-workspace .fi-rank-more { display: inline-block; }
+}
+@media (max-width: 700px) {
+  .fi-chart { padding: 12px 10px; }
+  .fi-matrix { aspect-ratio: 1 / 1; }
+  .fi-quad { padding: 7px 8px; }
+  .fi-quad b { font-size: .86rem; }
+  .fi-quad span { display: none; }
+  .vorton-workspace .fi-bubble { font-size: .66rem; }
+  .fi-legend-item.size { margin-left: 0; }
+  .fi-sec-sub { display: none; }
+  .fi-hrow { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .fi-idea { padding: 14px 14px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fi-idea, .vorton-workspace .fi-bubble { transition: none; }
+  .fi-idea.is-focused, .fi-hrow.is-focused { animation: none; box-shadow: 0 0 0 4px var(--aub-accent-soft); }
+}
+
+/* Shared provenance renders as a grid here; keep its confidence pill compact. */
+.fi .forge-provenance.long .forge-prov-who, .fi .forge-provenance.long .forge-confidence { justify-self: start; }
+.fi-rail .fi-rl.st-history > span:first-of-type { white-space: normal; line-height: 1.2; }

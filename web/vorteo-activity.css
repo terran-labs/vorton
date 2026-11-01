@@ -1,0 +1,16 @@
+.vorteo-activity { margin-block: 1.5rem; }
+.vorteo-activity .record-heading,.activity-thread-heading { display:flex;justify-content:space-between;gap:1rem;align-items:start;flex-wrap:wrap; }
+.activity-filter { display:flex;gap:.75rem;align-items:center;margin-block:1rem;flex-wrap:wrap; }
+.activity-threads { display:grid;gap:1rem;margin-top:1rem; }
+.activity-thread { border:1px solid var(--border-color,rgba(128,128,128,.3));border-radius:.75rem;padding:1rem;min-width:0; }
+.activity-thread h3 { margin:0; font-size:1rem; }
+.activity-thread p { margin-block:.5rem; }
+.activity-thread-heading span { font-size:.875rem; }
+.activity-thread a,.activity-thread dd { overflow-wrap:anywhere; }
+.activity-thread dl>div { display:grid;grid-template-columns:6rem minmax(0,1fr);gap:.5rem; }
+.activity-thread dd { margin:0; }
+.activity-coverage { margin-block:1rem; }
+.activity-sources>div { margin-block:.75rem; }
+.activity-sources dd { margin:0;overflow-wrap:anywhere; }
+.vorteo-activity summary { cursor:pointer; }
+@media(max-width:500px) { .activity-thread dl>div { grid-template-columns:1fr;gap:.15rem;margin-block:.5rem; } }

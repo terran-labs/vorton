@@ -222,3 +222,25 @@
   content: "";
   pointer-events: none;
 }
+.theme-preview-tooltip { width: 100%; justify-content: center; }
+
+@media (hover: none), (pointer: coarse) {
+  .appearance-menu { max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+  /* Keep the pill silhouette while giving touch input a 44px hit area. */
+  .theme-preview-button-compact {
+    position: relative;
+  }
+  .theme-preview-button-compact::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: max(100%, 44px);
+    transform: translateY(-50%);
+  }
+  .theme-preview-button:hover, .theme-preview-button:focus-visible { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-preview-button, .theme-preview-button-surface { transition: none; }
+}
